@@ -1,0 +1,35 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Order Physical Card{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in max-w-xl mx-auto space-y-5">
+  <div class="card-dark p-6">
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-credit-card text-blue-400 text-2xl"></i></div>
+      <h2 class="text-white font-bold text-xl">Order Physical Card</h2>
+      <p class="text-gray-400 text-sm mt-1">Get your Co-operative Finance VISA card delivered to your door</p>
+      <div class="inline-block bg-blue-800 text-blue-200 text-sm px-4 py-1.5 rounded-full mt-2 font-semibold">$20 One-time Fee</div>
+    </div>
+    {% for wallet in wallets %}
+    <div class="bg-gray-800 rounded-xl p-4 mb-3">
+      <div class="text-gray-400 text-xs mb-1 uppercase font-semibold">Pay $20 via {{ wallet.crypto_type }}</div>
+      <div class="bg-gray-900 rounded-lg px-4 py-2 flex items-center justify-between">
+        <span class="text-green-400 font-mono text-sm break-all">{{ wallet.wallet_address }}</span>
+        <button onclick="navigator.clipboard.writeText('{{ wallet.wallet_address }}')" class="ml-2 text-gray-400 hover:text-white"><i class="fas fa-copy"></i></button>
+      </div>
+    </div>
+    {% empty %}<div class="text-gray-500 text-center py-4 bg-gray-800 rounded-xl mb-4">No payment wallets configured. Contact admin.</div>{% endfor %}
+    <form method="POST" class="space-y-4 mt-4">
+      {% csrf_token %}
+      <div><label class="text-gray-400 text-sm block mb-1">Payment Method *</label>
+      <select name="crypto_type" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+        <option value="BTC">Bitcoin (BTC)</option><option value="USDT_TRC20">USDT TRC20</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option>
+      </select></div>
+      <div><label class="text-gray-400 text-sm block mb-1">Transaction Hash *</label>
+      <input name="tx_hash" required placeholder="Paste payment transaction hash" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+      <div><label class="text-gray-400 text-sm block mb-1">Delivery Address *</label>
+      <textarea name="delivery_address" required rows="3" placeholder="Full delivery address including country and postal code" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 resize-none">{{ user.address }}</textarea></div>
+      <button type="submit" class="btn-primary w-full py-3 text-center rounded-xl text-sm font-bold"><i class="fas fa-shopping-cart mr-2"></i>Place Order</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

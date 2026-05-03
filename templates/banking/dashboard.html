@@ -1,0 +1,312 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Overview{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.full_name|default:user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; }
+.balance-card { background: linear-gradient(135deg, #1D4ED8 0%, #0B1E3A 60%, #1e3a5f 100%); border-radius: 20px; position: relative; overflow: hidden; }
+.balance-card::before { content:''; position:absolute; top:-30%; right:-10%; width:250px; height:250px; background:radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 65%); pointer-events:none; }
+.balance-card::after { content:''; position:absolute; bottom:-20%; left:-5%; width:180px; height:180px; background:radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 65%); pointer-events:none; }
+.txn-row { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; }
+.txn-row:hover { background: rgba(255,255,255,0.03); }
+.txn-row:last-child { border-bottom: none; }
+.quick-action { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; transition: all 0.2s; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; gap: 8px; }
+.quick-action:hover { background: rgba(29,78,216,0.3); border-color: rgba(37,99,235,0.5); transform: translateY(-2px); }
+.profile-ring { border: 3px solid #1D4ED8; padding: 2px; border-radius: 50%; }
+.mini-card { background: linear-gradient(135deg, #1D4ED8, #0B1E3A); border-radius: 10px; font-family: monospace; }
+.pulse-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
+.shimmer { background: linear-gradient(90deg, #1e293b 25%, #263548 50%, #1e293b 75%); background-size: 200% 100%; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="fade-in space-y-5">
+
+<!-- ═══ ROW 1: Balance Hero + Quick Stats ═══ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  <!-- Balance Card -->
+  <div class="balance-card lg:col-span-2 p-6 md:p-7">
+    <div class="flex items-start justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <!-- Profile Avatar -->
+        <div class="profile-ring flex-shrink-0">
+          {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="Profile"
+              class="w-12 h-12 rounded-full object-cover">
+          {% else %}
+            <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-white font-bold text-lg">
+              {{ user.full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+            </div>
+          {% endif %}
+        </div>
+        <div>
+          <p class="text-blue-200 text-xs font-medium">Good {% now "H" as hour %}{% if hour < "12" %}Morning{% elif hour < "17" %}Afternoon{% else %}Evening{% endif %},</p>
+          <p class="text-white font-bold text-sm">{{ user.full_name|default:user.username }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-white bg-opacity-10 rounded-full px-3 py-1.5">
+        <div class="pulse-dot"></div>
+        <span class="text-white text-xs font-medium">Live</span>
+      </div>
+    </div>
+
+    <div class="mb-1">
+      <p class="text-blue-300 text-xs uppercase tracking-widest font-semibold mb-1">Available Balance</p>
+      <div class="flex items-end gap-2">
+        <span class="text-white font-bold leading-none" style="font-size:clamp(1.8rem,5vw,2.8rem);">
+          {{ user.get_currency_symbol }}{{ user.balance|floatformat:2 }}
+        </span>
+        <span class="text-blue-300 text-sm mb-1">{{ user.currency }}</span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-white border-opacity-10">
+      <div class="text-center">
+        <p class="text-blue-300 text-xs">Account No.</p>
+        <p class="text-white font-mono text-sm font-bold">{{ user.account_number }}</p>
+      </div>
+      <div class="w-px h-8 bg-white bg-opacity-20"></div>
+      <div class="text-center">
+        <p class="text-blue-300 text-xs">Account Type</p>
+        <p class="text-white text-sm font-bold">{{ user.get_account_type_display }}</p>
+      </div>
+      <div class="w-px h-8 bg-white bg-opacity-20"></div>
+      <div class="text-center">
+        <p class="text-blue-300 text-xs">KYC Status</p>
+        <p class="text-sm font-bold {% if user.kyc_status == 'approved' %}text-green-400{% elif user.kyc_status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
+          {{ user.get_kyc_status_display }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mt-4">
+      <a href="/dashboard/transfer/" class="bg-white text-blue-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-50 transition flex items-center gap-1.5">
+        <i class="fas fa-paper-plane"></i> Send Money
+      </a>
+      <a href="/dashboard/deposit/" class="bg-white bg-opacity-15 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-opacity-25 transition flex items-center gap-1.5 border border-white border-opacity-20">
+        <i class="fas fa-plus"></i> Deposit
+      </a>
+      <a href="/dashboard/transactions/" class="bg-white bg-opacity-15 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-opacity-25 transition flex items-center gap-1.5 border border-white border-opacity-20">
+        <i class="fas fa-list"></i> History
+      </a>
+    </div>
+  </div>
+
+  <!-- Right Stats Column -->
+  <div class="flex flex-col gap-4">
+    <!-- Mini Virtual Card -->
+    <div class="mini-card p-4 relative overflow-hidden">
+      <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <p class="text-blue-300 text-xs">Virtual Card</p>
+          <p class="text-white font-bold text-sm font-mono tracking-wider">•••• {{ user.card_number|slice:"-4:" }}</p>
+        </div>
+        <span class="text-white font-black text-lg italic" style="font-family:serif;">VISA</span>
+      </div>
+      <div class="flex justify-between items-end">
+        <div>
+          <p class="text-blue-300 text-xs mb-0.5">Expires</p>
+          <p class="text-white text-xs font-mono">{{ user.card_expiry }}</p>
+        </div>
+        <a href="/dashboard/card/" class="text-xs text-blue-300 hover:text-white transition">View →</a>
+      </div>
+    </div>
+
+    <!-- Routing Info -->
+    <div class="stat-card p-4">
+      <p class="text-gray-500 text-xs uppercase tracking-widest mb-2">Routing Number</p>
+      <p class="text-white font-mono font-bold">{{ user.routing_number }}</p>
+      <p class="text-gray-500 text-xs mt-2">Use for bank-to-bank transfers</p>
+    </div>
+
+    <!-- KYC Alert -->
+    {% if user.kyc_status == 'not_submitted' %}
+    <a href="/dashboard/kyc/" class="stat-card p-4 block border border-yellow-800 hover:border-yellow-600 transition no-underline" style="text-decoration:none;">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-yellow-900 rounded-lg flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-exclamation-triangle text-yellow-400 text-sm"></i>
+        </div>
+        <div>
+          <p class="text-yellow-400 font-bold text-xs">Verify Identity</p>
+          <p class="text-gray-500 text-xs">Complete KYC to unlock all features</p>
+        </div>
+      </div>
+    </a>
+    {% elif user.kyc_status == 'approved' %}
+    <div class="stat-card p-4 border border-green-900">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-green-900 rounded-lg flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-check-circle text-green-400 text-sm"></i>
+        </div>
+        <div>
+          <p class="text-green-400 font-bold text-xs">Identity Verified</p>
+          <p class="text-gray-500 text-xs">Full banking access enabled</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══ ROW 2: Quick Actions ═══ -->
+<div class="stat-card p-5">
+  <h3 class="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-4">Quick Actions</h3>
+  <div class="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-3">
+    <a href="/dashboard/transfer/" class="quick-action">
+      <div class="w-10 h-10 bg-blue-900 rounded-xl flex items-center justify-center"><i class="fas fa-paper-plane text-blue-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Send</span>
+    </a>
+    <a href="/dashboard/deposit/" class="quick-action">
+      <div class="w-10 h-10 bg-orange-900 rounded-xl flex items-center justify-center"><i class="fab fa-bitcoin text-orange-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Deposit</span>
+    </a>
+    <a href="/dashboard/transactions/" class="quick-action">
+      <div class="w-10 h-10 bg-purple-900 rounded-xl flex items-center justify-center"><i class="fas fa-list text-purple-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">History</span>
+    </a>
+    <a href="/dashboard/card/" class="quick-action">
+      <div class="w-10 h-10 bg-cyan-900 rounded-xl flex items-center justify-center"><i class="fas fa-credit-card text-cyan-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Card</span>
+    </a>
+    <a href="/dashboard/loans/" class="quick-action">
+      <div class="w-10 h-10 bg-green-900 rounded-xl flex items-center justify-center"><i class="fas fa-hand-holding-usd text-green-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Loans</span>
+    </a>
+    <a href="/dashboard/kyc/" class="quick-action">
+      <div class="w-10 h-10 bg-yellow-900 rounded-xl flex items-center justify-center"><i class="fas fa-id-badge text-yellow-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">KYC</span>
+    </a>
+    <a href="/dashboard/notifications/" class="quick-action">
+      <div class="w-10 h-10 bg-red-900 rounded-xl flex items-center justify-center relative">
+        <i class="fas fa-bell text-red-400"></i>
+        {% if unread_count %}<span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center" style="font-size:10px;">{{ unread_count }}</span>{% endif %}
+      </div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Alerts</span>
+    </a>
+    <a href="/dashboard/profile/" class="quick-action">
+      <div class="w-10 h-10 bg-gray-700 rounded-xl flex items-center justify-center"><i class="fas fa-user-cog text-gray-400"></i></div>
+      <span class="text-gray-400 text-xs text-center leading-tight">Profile</span>
+    </a>
+  </div>
+</div>
+
+<!-- ═══ ROW 3: Recent Transactions + Account Summary ═══ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  <!-- Transactions -->
+  <div class="stat-card p-5 lg:col-span-2">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-white font-bold">Recent Transactions</h3>
+      <a href="/dashboard/transactions/" class="text-blue-400 text-xs hover:text-blue-300 transition font-semibold">View All →</a>
+    </div>
+    {% if recent_txns %}
+    <div>
+      {% for txn in recent_txns %}
+      <div class="txn-row flex items-center justify-between py-3.5 px-1">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0
+            {% if txn.transaction_type == 'transfer' %}bg-blue-950 text-blue-400
+            {% elif txn.transaction_type == 'crypto_deposit' %}bg-orange-950 text-orange-400
+            {% elif txn.transaction_type == 'admin_credit' or txn.transaction_type == 'loan_disbursement' %}bg-green-950 text-green-400
+            {% elif txn.transaction_type == 'admin_debit' %}bg-red-950 text-red-400
+            {% else %}bg-gray-800 text-gray-400{% endif %}">
+            <i class="fas text-sm
+              {% if txn.transaction_type == 'transfer' %}fa-arrow-up-right-from-square
+              {% elif txn.transaction_type == 'crypto_deposit' %}fa-bitcoin
+              {% elif txn.transaction_type == 'admin_credit' %}fa-arrow-down-to-line
+              {% elif txn.transaction_type == 'admin_debit' %}fa-arrow-up-from-line
+              {% elif txn.transaction_type == 'loan_disbursement' %}fa-coins
+              {% else %}fa-circle-dot{% endif %}"></i>
+          </div>
+          <div>
+            <p class="text-white text-sm font-semibold leading-tight">{{ txn.get_transaction_type_display }}</p>
+            <p class="text-gray-500 text-xs mt-0.5">{{ txn.created_at|date:"M d, Y" }}{% if txn.recipient_name %} · {{ txn.recipient_name|truncatechars:18 }}{% endif %}</p>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0 ml-2">
+          <p class="font-bold text-sm
+            {% if txn.transaction_type in 'admin_credit,loan_disbursement' %}text-green-400
+            {% elif txn.transaction_type == 'crypto_deposit' %}text-orange-400
+            {% elif txn.transaction_type == 'admin_debit' %}text-red-400
+            {% elif txn.transaction_type == 'transfer' %}text-red-400
+            {% else %}text-gray-300{% endif %}">
+            {% if txn.transaction_type in 'admin_credit,loan_disbursement,crypto_deposit' %}+{% else %}-{% endif %}{{ user.get_currency_symbol }}{{ txn.amount|floatformat:2 }}
+          </p>
+          <span class="status-badge badge-{{ txn.status }} text-xs">{{ txn.get_status_display }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+      <div class="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-receipt text-gray-600 text-2xl"></i>
+      </div>
+      <p class="text-gray-500 font-medium">No transactions yet</p>
+      <a href="/dashboard/transfer/" class="text-blue-400 text-sm hover:text-blue-300 mt-1 inline-block">Make your first transfer →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Account Summary Panel -->
+  <div class="flex flex-col gap-4">
+    <!-- Loan status -->
+    <div class="stat-card p-5">
+      <h4 class="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-3">Loan Overview</h4>
+      {% with active_loan=user.loans.all|first %}
+      {% if active_loan %}
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-gray-400 text-sm">Latest Loan</span>
+          <span class="status-badge badge-{{ active_loan.status }}">{{ active_loan.get_status_display }}</span>
+        </div>
+        <div class="text-white font-bold text-xl">{{ user.get_currency_symbol }}{{ active_loan.amount|floatformat:2 }}</div>
+        <div class="text-gray-500 text-xs mt-1">{{ active_loan.duration_months }} months · {{ active_loan.interest_rate }}% p.a.</div>
+      {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-hand-holding-usd text-gray-700 text-3xl mb-2 block"></i>
+          <p class="text-gray-500 text-sm">No active loans</p>
+          <a href="/dashboard/loans/" class="text-blue-400 text-xs hover:text-blue-300 mt-1 inline-block">Apply for a loan</a>
+        </div>
+      {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Security Score -->
+    <div class="stat-card p-5">
+      <h4 class="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-3">Security Score</h4>
+      {% with score=0 %}
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs"><span class="text-gray-400">Email Verified</span><i class="fas fa-check-circle text-green-400"></i></div>
+        <div class="flex justify-between text-xs"><span class="text-gray-400">KYC Complete</span>
+          {% if user.kyc_status == 'approved' %}<i class="fas fa-check-circle text-green-400"></i>{% else %}<i class="fas fa-times-circle text-red-500"></i>{% endif %}
+        </div>
+        <div class="flex justify-between text-xs"><span class="text-gray-400">Profile Photo</span>
+          {% if user.profile_image %}<i class="fas fa-check-circle text-green-400"></i>{% else %}<i class="fas fa-times-circle text-red-500"></i>{% endif %}
+        </div>
+        <div class="flex justify-between text-xs"><span class="text-gray-400">Card Active</span><i class="fas fa-check-circle text-green-400"></i></div>
+      </div>
+      <div class="mt-3 bg-gray-800 rounded-full h-1.5">
+        <div class="bg-blue-500 h-1.5 rounded-full" style="width:{% if user.kyc_status == 'approved' and user.profile_image %}100{% elif user.kyc_status == 'approved' %}75{% elif user.profile_image %}50{% else %}25{% endif %}%"></div>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Support -->
+    <a href="https://wa.me/2349121304245" target="_blank" class="stat-card p-4 flex items-center gap-3 hover:border-green-800 border border-transparent transition" style="text-decoration:none;">
+      <div class="w-9 h-9 bg-green-900 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fab fa-whatsapp text-green-400 text-lg"></i>
+      </div>
+      <div>
+        <p class="text-white font-semibold text-sm">Need Help?</p>
+        <p class="text-gray-500 text-xs">Chat with support 24/7</p>
+      </div>
+    </a>
+  </div>
+
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Crypto Deposit{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in max-w-2xl mx-auto space-y-6">
+  <div class="card-dark p-6">
+    <h2 class="text-white font-bold text-xl mb-1">Deposit via Cryptocurrency</h2>
+    <p class="text-gray-400 text-sm mb-6">Send crypto to the wallet address below, then submit the form. Admin will confirm and credit your account.</p>
+    {% for wallet in wallets %}
+    <div class="bg-gray-800 rounded-xl p-4 mb-3">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xs">{{ wallet.crypto_type|slice:":1" }}</div>
+        <span class="text-white font-semibold">{{ wallet.crypto_type }}</span>
+      </div>
+      <div class="bg-gray-900 rounded-lg px-4 py-2.5 flex items-center justify-between">
+        <span class="text-green-400 font-mono text-sm break-all">{{ wallet.wallet_address }}</span>
+        <button onclick="copyAddr('{{ wallet.wallet_address }}')" class="ml-3 text-gray-400 hover:text-white flex-shrink-0"><i class="fas fa-copy"></i></button>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-gray-800 rounded-xl p-6 text-center text-gray-500">
+      <i class="fas fa-wallet text-3xl mb-2 text-gray-600"></i>
+      <p>No deposit wallets configured. Contact admin.</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card-dark p-6">
+    <h3 class="text-white font-bold mb-4">Submit Deposit</h3>
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <div><label class="text-gray-400 text-sm block mb-1">Cryptocurrency *</label>
+      <select name="crypto_type" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+        <option value="">-- Select Crypto --</option>
+        <option value="BTC">Bitcoin (BTC)</option>
+        <option value="USDT_TRC20">USDT TRC20</option>
+        <option value="ETH">Ethereum (ETH)</option>
+        <option value="SOL">Solana (SOL)</option>
+      </select></div>
+      <div><label class="text-gray-400 text-sm block mb-1">Transaction Hash / TXID *</label>
+      <input name="tx_hash" required placeholder="0x1234..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+      <div><label class="text-gray-400 text-sm block mb-1">Amount in USD *</label>
+      <input name="amount_usd" type="number" step="0.01" min="1" required placeholder="100.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+      <div class="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-3 text-blue-300 text-xs">
+        <i class="fas fa-info-circle mr-1"></i> After submission, admin verifies your transaction on the blockchain. Balance is updated upon confirmation.
+      </div>
+      <button type="submit" class="btn-primary w-full py-3 text-center rounded-xl text-sm font-bold">
+        <i class="fas fa-check mr-2"></i>Submit Deposit
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block page_js %}
+<script>
+function copyAddr(addr){
+  navigator.clipboard.writeText(addr).then(()=>{
+    const el=document.createElement('div');
+    el.textContent='Address copied!';
+    el.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:white;padding:8px 20px;border-radius:8px;z-index:9999;font-size:14px;';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2000);
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,391 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}Manage your personal information{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-avatar-wrap { position:relative; width:130px; height:130px; margin:0 auto; }
+.profile-avatar { width:130px; height:130px; border-radius:50%; object-fit:cover; border:4px solid #1D4ED8; }
+.profile-avatar-placeholder { width:130px; height:130px; border-radius:50%; background:linear-gradient(135deg,#1D4ED8,#0B1E3A); border:4px solid #1D4ED8; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; color:white; }
+.avatar-edit-btn { position:absolute; bottom:4px; right:4px; width:34px; height:34px; background:#1D4ED8; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid #0f172a; transition:all .2s; }
+.avatar-edit-btn:hover { background:#1e40af; transform:scale(1.1); }
+.field-group { background:#1e293b; border-radius:12px; padding:20px; }
+.form-input { width:100%; background:#0f172a; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 14px; color:white; font-size:0.875rem; transition:border-color .2s; outline:none; }
+.form-input:focus { border-color:#1D4ED8; box-shadow:0 0 0 3px rgba(29,78,216,0.15); }
+.form-label { color:#94a3b8; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px; }
+.info-badge { background:rgba(29,78,216,0.15); border:1px solid rgba(29,78,216,0.3); border-radius:8px; padding:10px 14px; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="fade-in max-w-3xl mx-auto space-y-5">
+
+  <!-- ═══ PROFILE PHOTO CARD ═══ -->
+  <div class="card-dark p-6 md:p-8">
+    <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+
+      <!-- Avatar -->
+      <div class="text-center flex-shrink-0">
+        <form method="POST" enctype="multipart/form-data" id="photoForm">
+          {% csrf_token %}
+          <input type="hidden" name="form_section" value="photo">
+          <div class="profile-avatar-wrap mb-3">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="Profile Photo"
+                class="profile-avatar" id="avatarPreview">
+            {% else %}
+              <div class="profile-avatar-placeholder" id="avatarPlaceholder">
+                {{ user.full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+              </div>
+              <img src="" alt="Preview" class="profile-avatar hidden" id="avatarPreview">
+            {% endif %}
+            <label for="photoInput" class="avatar-edit-btn" title="Change photo">
+              <i class="fas fa-camera text-white text-sm"></i>
+            </label>
+            <input type="file" id="photoInput" name="profile_image" accept="image/*"
+              class="hidden" onchange="previewPhoto(this)">
+          </div>
+          <div id="photoActions" class="hidden flex flex-col gap-2 items-center">
+            <button type="submit" class="btn-primary text-xs px-4 py-2 rounded-lg w-full">
+              <i class="fas fa-upload mr-1"></i> Save Photo
+            </button>
+            <button type="button" onclick="cancelPhoto()" class="text-gray-500 text-xs hover:text-gray-300 transition">
+              Cancel
+            </button>
+          </div>
+          {% if not user.profile_image %}
+          <p class="text-gray-500 text-xs mt-2">Click camera to add photo</p>
+          {% endif %}
+        </form>
+      </div>
+
+      <!-- Identity Summary -->
+      <div class="flex-1 w-full">
+        <div class="flex items-center gap-3 mb-4">
+          <div>
+            <h2 class="text-white font-bold text-xl">{{ user.full_name|default:user.username }}</h2>
+            <p class="text-gray-400 text-sm">{{ user.email }}</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <span class="status-badge badge-{{ user.kyc_status }}">KYC: {{ user.get_kyc_status_display }}</span>
+              <span class="bg-blue-900 text-blue-300 text-xs px-2 py-0.5 rounded-full font-semibold">{{ user.get_account_type_display }}</span>
+              <span class="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full font-semibold">{{ user.currency }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Read-only account details -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="info-badge">
+            <p class="text-gray-500 text-xs mb-0.5">Account Number</p>
+            <p class="text-white font-mono font-bold text-sm">{{ user.account_number }}</p>
+          </div>
+          <div class="info-badge">
+            <p class="text-gray-500 text-xs mb-0.5">Routing Number</p>
+            <p class="text-white font-mono font-bold text-sm">{{ user.routing_number }}</p>
+          </div>
+          <div class="info-badge">
+            <p class="text-gray-500 text-xs mb-0.5">Member Since</p>
+            <p class="text-white font-bold text-sm">{{ user.date_joined|date:"F Y" }}</p>
+          </div>
+          <div class="info-badge">
+            <p class="text-gray-500 text-xs mb-0.5">User ID</p>
+            <p class="text-white font-mono font-bold text-sm">{{ user.username }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PERSONAL DETAILS FORM ═══ -->
+  <div class="card-dark p-6 md:p-7">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-user text-blue-400 text-sm"></i>
+      </div>
+      <h3 class="text-white font-bold text-lg">Personal Information</h3>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="form_section" value="personal">
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Full Name</label>
+          <input name="full_name" type="text" value="{{ user.full_name }}" placeholder="Your full name" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Email Address</label>
+          <input name="email" type="email" value="{{ user.email }}" placeholder="your@email.com" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Phone Number</label>
+          <input name="phone" type="tel" value="{{ user.phone }}" placeholder="+1 234 567 8900" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Occupation</label>
+          <input name="occupation" type="text" value="{{ user.occupation }}" placeholder="e.g. Engineer, Business Owner" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Country</label>
+          <select name="country" class="form-input">
+<option value="">-- Select Country --</option>
+<option value="Afghanistan">🇦🇫 Afghanistan</option>
+<option value="Albania">🇦🇱 Albania</option>
+<option value="Algeria">🇩🇿 Algeria</option>
+<option value="Andorra">🇦🇩 Andorra</option>
+<option value="Angola">🇦🇴 Angola</option>
+<option value="Antigua and Barbuda">🇦🇬 Antigua and Barbuda</option>
+<option value="Argentina">🇦🇷 Argentina</option>
+<option value="Armenia">🇦🇲 Armenia</option>
+<option value="Australia">🇦🇺 Australia</option>
+<option value="Austria">🇦🇹 Austria</option>
+<option value="Azerbaijan">🇦🇿 Azerbaijan</option>
+<option value="Bahamas">🇧🇸 Bahamas</option>
+<option value="Bahrain">🇧🇭 Bahrain</option>
+<option value="Bangladesh">🇧🇩 Bangladesh</option>
+<option value="Barbados">🇧🇧 Barbados</option>
+<option value="Belarus">🇧🇾 Belarus</option>
+<option value="Belgium">🇧🇪 Belgium</option>
+<option value="Belize">🇧🇿 Belize</option>
+<option value="Benin">🇧🇯 Benin</option>
+<option value="Bhutan">🇧🇹 Bhutan</option>
+<option value="Bolivia">🇧🇴 Bolivia</option>
+<option value="Bosnia and Herzegovina">🇧🇦 Bosnia and Herzegovina</option>
+<option value="Botswana">🇧🇼 Botswana</option>
+<option value="Brazil">🇧🇷 Brazil</option>
+<option value="Brunei">🇧🇳 Brunei</option>
+<option value="Bulgaria">🇧🇬 Bulgaria</option>
+<option value="Burkina Faso">🇧🇫 Burkina Faso</option>
+<option value="Burundi">🇧🇮 Burundi</option>
+<option value="Cambodia">🇰🇭 Cambodia</option>
+<option value="Cameroon">🇨🇲 Cameroon</option>
+<option value="Canada">🇨🇦 Canada</option>
+<option value="Cape Verde">🇨🇻 Cape Verde</option>
+<option value="Central African Republic">🇨🇫 Central African Republic</option>
+<option value="Chad">🇹🇩 Chad</option>
+<option value="Chile">🇨🇱 Chile</option>
+<option value="China">🇨🇳 China</option>
+<option value="Colombia">🇨🇴 Colombia</option>
+<option value="Comoros">🇰🇲 Comoros</option>
+<option value="Congo">🇨🇬 Congo</option>
+<option value="Democratic Republic of the Congo">🇨🇩 Democratic Republic of the Congo</option>
+<option value="Costa Rica">🇨🇷 Costa Rica</option>
+<option value="Croatia">🇭🇷 Croatia</option>
+<option value="Cuba">🇨🇺 Cuba</option>
+<option value="Cyprus">🇨🇾 Cyprus</option>
+<option value="Czech Republic">🇨🇿 Czech Republic</option>
+<option value="Denmark">🇩🇰 Denmark</option>
+<option value="Djibouti">🇩🇯 Djibouti</option>
+<option value="Dominica">🇩🇲 Dominica</option>
+<option value="Dominican Republic">🇩🇴 Dominican Republic</option>
+<option value="Ecuador">🇪🇨 Ecuador</option>
+<option value="Egypt">🇪🇬 Egypt</option>
+<option value="El Salvador">🇸🇻 El Salvador</option>
+<option value="Equatorial Guinea">🇬🇶 Equatorial Guinea</option>
+<option value="Eritrea">🇪🇷 Eritrea</option>
+<option value="Estonia">🇪🇪 Estonia</option>
+<option value="Ethiopia">🇪🇹 Ethiopia</option>
+<option value="Fiji">🇫🇯 Fiji</option>
+<option value="Finland">🇫🇮 Finland</option>
+<option value="France">🇫🇷 France</option>
+<option value="Gabon">🇬🇦 Gabon</option>
+<option value="Gambia">🇬🇲 Gambia</option>
+<option value="Georgia">🇬🇪 Georgia</option>
+<option value="Germany">🇩🇪 Germany</option>
+<option value="Ghana">🇬🇭 Ghana</option>
+<option value="Greece">🇬🇷 Greece</option>
+<option value="Grenada">🇬🇩 Grenada</option>
+<option value="Guatemala">🇬🇹 Guatemala</option>
+<option value="Guinea">🇬🇳 Guinea</option>
+<option value="Guinea-Bissau">🇬🇼 Guinea-Bissau</option>
+<option value="Guyana">🇬🇾 Guyana</option>
+<option value="Haiti">🇭🇹 Haiti</option>
+<option value="Honduras">🇭🇳 Honduras</option>
+<option value="Hungary">🇭🇺 Hungary</option>
+<option value="Iceland">🇮🇸 Iceland</option>
+<option value="India">🇮🇳 India</option>
+<option value="Indonesia">🇮🇩 Indonesia</option>
+<option value="Iran">🇮🇷 Iran</option>
+<option value="Iraq">🇮🇶 Iraq</option>
+<option value="Ireland">🇮🇪 Ireland</option>
+<option value="Israel">🇮🇱 Israel</option>
+<option value="Italy">🇮🇹 Italy</option>
+<option value="Jamaica">🇯🇲 Jamaica</option>
+<option value="Japan">🇯🇵 Japan</option>
+<option value="Jordan">🇯🇴 Jordan</option>
+<option value="Kazakhstan">🇰🇿 Kazakhstan</option>
+<option value="Kenya">🇰🇪 Kenya</option>
+<option value="Kuwait">🇰🇼 Kuwait</option>
+<option value="Kyrgyzstan">🇰🇬 Kyrgyzstan</option>
+<option value="Laos">🇱🇦 Laos</option>
+<option value="Latvia">🇱🇻 Latvia</option>
+<option value="Lebanon">🇱🇧 Lebanon</option>
+<option value="Lesotho">🇱🇸 Lesotho</option>
+<option value="Liberia">🇱🇷 Liberia</option>
+<option value="Libya">🇱🇾 Libya</option>
+<option value="Lithuania">🇱🇹 Lithuania</option>
+<option value="Luxembourg">🇱🇺 Luxembourg</option>
+<option value="Madagascar">🇲🇬 Madagascar</option>
+<option value="Malawi">🇲🇼 Malawi</option>
+<option value="Malaysia">🇲🇾 Malaysia</option>
+<option value="Maldives">🇲🇻 Maldives</option>
+<option value="Mali">🇲🇱 Mali</option>
+<option value="Malta">🇲🇹 Malta</option>
+<option value="Marshall Islands">🇲🇭 Marshall Islands</option>
+<option value="Mauritania">🇲🇷 Mauritania</option>
+<option value="Mauritius">🇲🇺 Mauritius</option>
+<option value="Mexico">🇲🇽 Mexico</option>
+<option value="Micronesia">🇫🇲 Micronesia</option>
+<option value="Moldova">🇲🇩 Moldova</option>
+<option value="Monaco">🇲🇨 Monaco</option>
+<option value="Mongolia">🇲🇳 Mongolia</option>
+<option value="Montenegro">🇲🇪 Montenegro</option>
+<option value="Morocco">🇲🇦 Morocco</option>
+<option value="Mozambique">🇲🇿 Mozambique</option>
+<option value="Myanmar">🇲🇲 Myanmar</option>
+<option value="Namibia">🇳🇦 Namibia</option>
+<option value="Nauru">🇳🇷 Nauru</option>
+<option value="Nepal">🇳🇵 Nepal</option>
+<option value="Netherlands">🇳🇱 Netherlands</option>
+<option value="New Zealand">🇳🇿 New Zealand</option>
+<option value="Nicaragua">🇳🇮 Nicaragua</option>
+<option value="Niger">🇳🇪 Niger</option>
+<option value="Nigeria">🇳🇬 Nigeria</option>
+<option value="North Korea">🇰🇵 North Korea</option>
+<option value="North Macedonia">🇲🇰 North Macedonia</option>
+<option value="Norway">🇳🇴 Norway</option>
+<option value="Oman">🇴🇲 Oman</option>
+<option value="Pakistan">🇵🇰 Pakistan</option>
+<option value="Panama">🇵🇦 Panama</option>
+<option value="Papua New Guinea">🇵🇬 Papua New Guinea</option>
+<option value="Paraguay">🇵🇾 Paraguay</option>
+<option value="Peru">🇵🇪 Peru</option>
+<option value="Philippines">🇵🇭 Philippines</option>
+<option value="Poland">🇵🇱 Poland</option>
+<option value="Portugal">🇵🇹 Portugal</option>
+<option value="Qatar">🇶🇦 Qatar</option>
+<option value="Romania">🇷🇴 Romania</option>
+<option value="Russia">🇷🇺 Russia</option>
+<option value="Rwanda">🇷🇼 Rwanda</option>
+<option value="Saint Kitts and Nevis">🇰🇳 Saint Kitts and Nevis</option>
+<option value="Saint Lucia">🇱🇨 Saint Lucia</option>
+<option value="Saint Vincent and the Grenadines">🇻🇨 Saint Vincent and the Grenadines</option>
+<option value="Samoa">🇼🇸 Samoa</option>
+<option value="San Marino">🇸🇲 San Marino</option>
+<option value="Sao Tome and Principe">🇸🇹 Sao Tome and Principe</option>
+<option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+<option value="Senegal">🇸🇳 Senegal</option>
+<option value="Serbia">🇷🇸 Serbia</option>
+<option value="Seychelles">🇸🇨 Seychelles</option>
+<option value="Sierra Leone">🇸🇱 Sierra Leone</option>
+<option value="Singapore">🇸🇬 Singapore</option>
+<option value="Slovakia">🇸🇰 Slovakia</option>
+<option value="Slovenia">🇸🇮 Slovenia</option>
+<option value="Solomon Islands">🇸🇧 Solomon Islands</option>
+<option value="Somalia">🇸🇴 Somalia</option>
+<option value="South Africa">🇿🇦 South Africa</option>
+<option value="South Korea">🇰🇷 South Korea</option>
+<option value="South Sudan">🇸🇸 South Sudan</option>
+<option value="Spain">🇪🇸 Spain</option>
+<option value="Sri Lanka">🇱🇰 Sri Lanka</option>
+<option value="Sudan">🇸🇩 Sudan</option>
+<option value="Suriname">🇸🇷 Suriname</option>
+<option value="Sweden">🇸🇪 Sweden</option>
+<option value="Switzerland">🇨🇭 Switzerland</option>
+<option value="Syria">🇸🇾 Syria</option>
+<option value="Tajikistan">🇹🇯 Tajikistan</option>
+<option value="Tanzania">🇹🇿 Tanzania</option>
+<option value="Thailand">🇹🇭 Thailand</option>
+<option value="Timor-Leste">🇹🇱 Timor-Leste</option>
+<option value="Togo">🇹🇬 Togo</option>
+<option value="Tonga">🇹🇴 Tonga</option>
+<option value="Trinidad and Tobago">🇹🇹 Trinidad and Tobago</option>
+<option value="Tunisia">🇹🇳 Tunisia</option>
+<option value="Turkey">🇹🇷 Turkey</option>
+<option value="Turkmenistan">🇹🇲 Turkmenistan</option>
+<option value="Tuvalu">🇹🇻 Tuvalu</option>
+<option value="Uganda">🇺🇬 Uganda</option>
+<option value="Ukraine">🇺🇦 Ukraine</option>
+<option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+<option value="United Kingdom">🇬🇧 United Kingdom</option>
+<option value="United States">🇺🇸 United States</option>
+<option value="Uruguay">🇺🇾 Uruguay</option>
+<option value="Uzbekistan">🇺🇿 Uzbekistan</option>
+<option value="Vanuatu">🇻🇺 Vanuatu</option>
+<option value="Vatican City">🇻🇦 Vatican City</option>
+<option value="Venezuela">🇻🇪 Venezuela</option>
+<option value="Vietnam">🇻🇳 Vietnam</option>
+<option value="Yemen">🇾🇪 Yemen</option>
+<option value="Zambia">🇿🇲 Zambia</option>
+<option value="Zimbabwe">🇿🇼 Zimbabwe</option>
+<option value="Palestine">🇵🇸 Palestine</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Postal / ZIP Code</label>
+          <input name="postal_code" type="text" value="{{ user.postal_code }}" placeholder="e.g. 10001" class="form-input">
+        </div>
+        <div class="md:col-span-2">
+          <label class="form-label">Residential Address</label>
+          <textarea name="address" rows="2" placeholder="Street address, City, State" class="form-input resize-none">{{ user.address }}</textarea>
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-3">
+        <button type="submit" class="btn-primary py-2.5 px-6 rounded-xl text-sm font-bold">
+          <i class="fas fa-save mr-2"></i>Save Changes
+        </button>
+        <a href="/dashboard/" class="bg-gray-700 text-gray-300 py-2.5 px-5 rounded-xl text-sm font-semibold hover:bg-gray-600 transition">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- ═══ SECURITY NOTE ═══ -->
+  <div class="card-dark p-5 border border-blue-900">
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 bg-blue-950 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+        <i class="fas fa-shield-alt text-blue-400 text-sm"></i>
+      </div>
+      <div>
+        <p class="text-blue-300 font-semibold text-sm mb-1">Account Security</p>
+        <p class="text-gray-500 text-xs leading-relaxed">To change your User ID or password, please contact customer support or use the admin portal. Keeping your profile information up-to-date helps us verify your identity faster.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+function previewPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPlaceholder');
+    preview.src = e.target.result;
+    preview.classList.remove('hidden');
+    if (placeholder) placeholder.classList.add('hidden');
+    document.getElementById('photoActions').classList.remove('hidden');
+    document.getElementById('photoActions').classList.add('flex');
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function cancelPhoto() {
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoActions').classList.add('hidden');
+  document.getElementById('photoActions').classList.remove('flex');
+  const preview = document.getElementById('avatarPreview');
+  {% if not user.profile_image %}
+  preview.classList.add('hidden');
+  const placeholder = document.getElementById('avatarPlaceholder');
+  if (placeholder) placeholder.classList.remove('hidden');
+  {% endif %}
+}
+</script>
+{% endblock %}

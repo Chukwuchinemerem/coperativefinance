@@ -1,0 +1,649 @@
+{% extends 'banking/base.html' %}
+{% block title %}Co-operative Finance Bank — Secure Digital Banking{% endblock %}
+{% block extra_css %}
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  .hero-slide { display:none; position:absolute; inset:0; background-size:cover; background-position:center; }
+  .hero-slide.active { display:block; }
+  .hero-overlay { position:absolute; inset:0; background:linear-gradient(135deg,rgba(11,30,58,0.90) 0%,rgba(37,99,235,0.35) 100%); }
+  .ticker-wrap { overflow:hidden; white-space:nowrap; }
+  .crypto-ticker { display:inline-block; animation:tickerScroll 40s linear infinite; }
+  @keyframes tickerScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .service-card { transition:all .3s; }
+  .service-card:hover { transform:translateY(-5px); box-shadow:0 20px 40px rgba(37,99,235,0.12); }
+  .faq-answer { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+  .faq-answer.open { max-height:400px; }
+  .testimonial-slide { display:none; }
+  .testimonial-slide.active { display:block; }
+  .partner-logo { filter:grayscale(100%); opacity:0.5; transition:all .3s; }
+  .partner-logo:hover { filter:grayscale(0%); opacity:1; }
+  .nav-link { color:#374151; font-weight:500; transition:color .2s; font-size:0.875rem; }
+  .nav-link:hover { color:#2563EB; }
+
+  /* Custom Google Translate */
+  #goog-te-banner-frame, .skiptranslate { display:none !important; }
+  body { top:0 !important; }
+  .goog-te-gadget { display:none !important; }
+
+  /* Language Selector */
+  .lang-dropdown { position:relative; }
+  .lang-btn { display:flex; align-items:center; gap:6px; background:white; border:1.5px solid #e5e7eb; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:0.8rem; font-weight:600; color:#374151; transition:all .2s; white-space:nowrap; }
+  .lang-btn:hover { border-color:#2563EB; color:#2563EB; }
+  .lang-menu { display:none; position:absolute; top:calc(100% + 6px); right:0; background:white; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.15); max-height:320px; overflow-y:auto; z-index:9999; min-width:200px; }
+  .lang-menu.open { display:block; }
+  .lang-menu::-webkit-scrollbar { width:4px; }
+  .lang-menu::-webkit-scrollbar-track { background:#f1f1f1; border-radius:4px; }
+  .lang-menu::-webkit-scrollbar-thumb { background:#2563EB; border-radius:4px; }
+  .lang-search { position:sticky; top:0; background:white; padding:10px; border-bottom:1px solid #f3f4f6; }
+  .lang-search input { width:100%; border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; font-size:0.8rem; outline:none; }
+  .lang-search input:focus { border-color:#2563EB; }
+  .lang-option { padding:9px 14px; font-size:0.82rem; color:#374151; cursor:pointer; transition:background .15s; display:flex; align-items:center; gap:8px; }
+  .lang-option:hover { background:#EFF6FF; color:#2563EB; }
+  .lang-option.active { background:#EFF6FF; color:#2563EB; font-weight:600; }
+</style>
+{% endblock %}
+{% block body %}
+
+<!-- Hidden Google Translate container -->
+<div id="google_translate_element" style="display:none;"></div>
+
+<!-- NAVBAR -->
+<nav class="bg-white shadow-sm sticky top-0 z-50" style="max-width:100vw;">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-2 flex-shrink-0">
+      <div class="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center">
+        <i class="fas fa-university text-white text-xs"></i>
+      </div>
+      <span class="font-bold text-lg" style="color:#0B1E3A;">Co-operative Finance<span class="text-blue-600"></span></span>
+    </a>
+
+    <!-- Desktop Nav -->
+    <div class="hidden lg:flex items-center gap-6">
+      <a href="#about" class="nav-link">About</a>
+      <a href="#services" class="nav-link">Services</a>
+      <a href="#security" class="nav-link">Security</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <!-- Custom Language Selector -->
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu(event)" id="langBtn">
+          <i class="fas fa-globe text-blue-600"></i>
+          <span id="currentLang">EN</span>
+          <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+        </button>
+        <div class="lang-menu" id="langMenu">
+          <div class="lang-search">
+            <input type="text" id="langSearch" placeholder="Search language..." oninput="filterLangs(this.value)">
+          </div>
+          <div id="langList"></div>
+        </div>
+      </div>
+
+      <a href="/login/" class="text-blue-700 font-semibold text-sm hidden md:block px-3 py-1.5 rounded-lg hover:bg-blue-50 transition">Login</a>
+      <a href="/register/" class="btn-primary text-sm px-4 py-2">Open Account</a>
+      <button class="lg:hidden text-gray-600 p-1.5" onclick="toggleMobileMenu()" id="menuBtn">
+        <i class="fas fa-bars text-lg" id="menuIcon"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-gray-100" style="max-width:100vw;">
+    <div class="px-4 py-3 space-y-1">
+      <a href="#about" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">About</a>
+      <a href="#services" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">Services</a>
+      <a href="#security" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">Security</a>
+      <a href="#how-it-works" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">How It Works</a>
+      <a href="#faq" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">FAQ</a>
+      <a href="#contact" onclick="closeMobileMenu()" class="block nav-link py-2.5 border-b border-gray-50">Contact</a>
+      <a href="/login/" class="block nav-link py-2.5 text-blue-700 font-semibold">Login</a>
+    </div>
+  </div>
+</nav>
+
+<!-- CRYPTO TICKER -->
+<div class="bg-gray-900 text-green-400 py-2 text-xs font-mono ticker-wrap" style="max-width:100vw;overflow:hidden;">
+  <div class="crypto-ticker" id="crypto-ticker"><span class="mr-8">Loading live prices...</span></div>
+</div>
+
+<!-- HERO CAROUSEL -->
+<div class="relative overflow-hidden" style="height:90vh;min-height:500px;max-width:100vw;" id="hero">
+  <!-- Slide 1: Modern bank building exterior -->
+  <div class="hero-slide active" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 2: Credit cards on dark surface -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 3: Businessman using phone/banking app -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1551434678-e076c223a692?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 4: ATM machine -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 5: Financial charts and graphs -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 6: Gold coins and cash money -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 7: POS terminal / contactless payment -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+  <!-- Slide 8: Bank vault / security safe -->
+  <div class="hero-slide" style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1559526324-593bc073d938?w=1600&q=80&fit=crop');background-size:cover;background-position:center;">
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(11,30,58,0.88) 0%,rgba(29,78,216,0.30) 100%);"></div>
+  </div>
+
+  <!-- Hero icons overlay -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+    <i class="fas fa-university" style="position:absolute;top:10%;left:5%;font-size:120px;color:rgba(255,255,255,0.03);"></i>
+    <i class="fas fa-credit-card" style="position:absolute;top:60%;right:5%;font-size:100px;color:rgba(255,255,255,0.03);"></i>
+    <i class="fas fa-chart-line" style="position:absolute;bottom:10%;left:50%;font-size:90px;color:rgba(255,255,255,0.02);transform:translateX(-50%);"></i>
+  </div>
+
+  <div class="absolute inset-0 flex items-center justify-center text-center z-10 px-4" style="padding-left:16px;padding-right:16px;">
+    <div class="w-full max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-blue-600 bg-opacity-20 border border-blue-400 border-opacity-30 rounded-full px-4 py-1.5 text-blue-200 text-xs md:text-sm mb-5 md:mb-6">
+        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+        Trusted by over 500,000 customers worldwide
+      </div>
+      <h1 class="text-white font-bold mb-4 md:mb-6 leading-tight" style="font-size:clamp(1.8rem,5vw,3.75rem);">
+        Banking That Works<br><span class="text-blue-400">For You</span>
+      </h1>
+      <p class="text-gray-300 mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed" style="font-size:clamp(0.9rem,2.5vw,1.125rem);">
+        Secure, fast, and globally connected digital banking with enterprise-grade security and real-time transactions across 150+ countries.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a href="/register/" class="btn-primary text-sm md:text-base px-6 md:px-8 py-3 w-full sm:w-auto text-center max-w-xs">
+          <i class="fas fa-user-plus mr-2"></i>Create Free Account
+        </a>
+        <a href="/login/" class="bg-white bg-opacity-10 border border-white border-opacity-30 text-white px-6 md:px-8 py-3 rounded-lg font-semibold hover:bg-opacity-20 transition text-sm md:text-base w-full sm:w-auto text-center max-w-xs">
+          <i class="fas fa-sign-in-alt mr-2"></i>Login
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-6 md:gap-10 mt-8 md:mt-10 text-gray-300">
+        <div class="text-center"><div class="font-bold text-white" style="font-size:clamp(1.1rem,3vw,1.5rem);">500K+</div><div class="text-xs md:text-sm">Customers</div></div>
+        <div class="w-px h-8 bg-gray-600"></div>
+        <div class="text-center"><div class="font-bold text-white" style="font-size:clamp(1.1rem,3vw,1.5rem);">150+</div><div class="text-xs md:text-sm">Countries</div></div>
+        <div class="w-px h-8 bg-gray-600"></div>
+        <div class="text-center"><div class="font-bold text-white" style="font-size:clamp(1.1rem,3vw,1.5rem);">$2B+</div><div class="text-xs md:text-sm">Transactions</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carousel Controls -->
+  <button onclick="prevSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-15 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-opacity-30 transition" aria-label="Previous">
+    <i class="fas fa-chevron-left text-sm"></i>
+  </button>
+  <button onclick="nextSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-15 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-opacity-30 transition" aria-label="Next">
+    <i class="fas fa-chevron-right text-sm"></i>
+  </button>
+  <div class="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex gap-2" id="dots"></div>
+</div>
+
+<!-- ABOUT -->
+<section id="about" class="py-14 md:py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
+      <div>
+        <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">About Co-operative Finance Bank</div>
+        <h2 class="font-bold text-gray-900 mb-5" style="font-size:clamp(1.5rem,3.5vw,2.25rem);">A New Era of Digital Banking Excellence</h2>
+        <p class="text-gray-600 mb-4 leading-relaxed text-sm md:text-base">Co-operative Finance Bank is a premier digital financial institution combining cutting-edge technology with enterprise-level security, serving individuals and corporations across 150+ countries.</p>
+        <p class="text-gray-600 mb-7 leading-relaxed text-sm md:text-base">Founded on transparency and innovation, we provide full-spectrum banking including international transfers, crypto deposits, virtual cards, and competitive loan products.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-blue-50 p-3 md:p-4 rounded-xl"><div class="text-blue-700 font-bold text-lg">FDIC</div><div class="text-gray-600 text-xs md:text-sm">Insured & Regulated</div></div>
+          <div class="bg-blue-50 p-3 md:p-4 rounded-xl"><div class="text-blue-700 font-bold text-lg">256-bit</div><div class="text-gray-600 text-xs md:text-sm">SSL Encryption</div></div>
+          <div class="bg-blue-50 p-3 md:p-4 rounded-xl"><div class="text-blue-700 font-bold text-lg">24/7</div><div class="text-gray-600 text-xs md:text-sm">Customer Support</div></div>
+          <div class="bg-blue-50 p-3 md:p-4 rounded-xl"><div class="text-blue-700 font-bold text-lg">99.9%</div><div class="text-gray-600 text-xs md:text-sm">Uptime Guarantee</div></div>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-blue-600 to-blue-900 rounded-2xl p-7 md:p-8 text-white">
+        <i class="fas fa-university text-4xl md:text-5xl mb-5 md:mb-6 opacity-80"></i>
+        <h3 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Our Mission</h3>
+        <p class="text-blue-100 leading-relaxed text-sm md:text-base">To democratize financial services by providing every individual and business with access to world-class banking infrastructure, regardless of location or background.</p>
+        <div class="mt-5 md:mt-6 pt-5 md:pt-6 border-t border-blue-500">
+          <div class="flex gap-4">
+            <div class="text-center flex-1"><div class="text-2xl md:text-3xl font-bold">15+</div><div class="text-blue-200 text-xs md:text-sm">Years Experience</div></div>
+            <div class="text-center flex-1"><div class="text-2xl md:text-3xl font-bold">A+</div><div class="text-blue-200 text-xs md:text-sm">Credit Rating</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" class="py-14 md:py-20 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-10 md:mb-14">
+      <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">What We Offer</div>
+      <h2 class="font-bold text-gray-900" style="font-size:clamp(1.5rem,3.5vw,2.25rem);">Comprehensive Banking Services</h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4"><i class="fas fa-exchange-alt text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">International Transfers</h3><p class="text-gray-500 text-sm leading-relaxed">Send money globally with SWIFT and IBAN support in seconds.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-green-100 text-green-700 flex items-center justify-center mb-4"><i class="fas fa-shield-alt text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">KYC Verification</h3><p class="text-gray-500 text-sm leading-relaxed">Full identity verification for secure, compliant banking.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-4"><i class="fas fa-credit-card text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Virtual Cards</h3><p class="text-gray-500 text-sm leading-relaxed">VISA-powered virtual cards for online payments worldwide.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center mb-4"><i class="fab fa-bitcoin text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Crypto Deposits</h3><p class="text-gray-500 text-sm leading-relaxed">Deposit BTC, ETH, USDT and SOL directly to your balance.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-red-100 text-red-700 flex items-center justify-center mb-4"><i class="fas fa-hand-holding-usd text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Personal Loans</h3><p class="text-gray-500 text-sm leading-relaxed">Competitive loan rates with flexible repayment schedules.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-4"><i class="fas fa-globe text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Global Coverage</h3><p class="text-gray-500 text-sm leading-relaxed">Access your account from 150+ countries around the world.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-yellow-100 text-yellow-700 flex items-center justify-center mb-4"><i class="fas fa-mobile-alt text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Mobile Banking</h3><p class="text-gray-500 text-sm leading-relaxed">Feature-rich mobile experience for banking on the go.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center mb-4"><i class="fas fa-chart-line text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Investment Tools</h3><p class="text-gray-500 text-sm leading-relaxed">Track and grow your wealth with real-time analytics.</p></div>
+      <div class="service-card bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100"><div class="w-11 h-11 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center mb-4"><i class="fas fa-lock text-lg"></i></div><h3 class="font-bold text-gray-900 mb-2">Secure Vault</h3><p class="text-gray-500 text-sm leading-relaxed">Military-grade encryption protecting every transaction.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security" class="py-14 md:py-20" style="background:#0B1E3A;">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-10 md:mb-14">
+      <div class="text-blue-400 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">Your Safety First</div>
+      <h2 class="text-white font-bold" style="font-size:clamp(1.5rem,3.5vw,2.25rem);">Bank-Grade Security</h2>
+      <p class="text-gray-400 mt-3 max-w-xl mx-auto text-sm md:text-base">Every transaction protected by multiple layers of enterprise security.</p>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-5 md:p-6 rounded-xl text-center hover:bg-opacity-10 transition"><i class="fas fa-shield-alt text-blue-400 text-2xl md:text-3xl mb-3 md:mb-4"></i><h3 class="font-bold text-white text-sm md:text-base mb-1 md:mb-2">256-bit SSL</h3><p class="text-gray-400 text-xs md:text-sm">End-to-end encryption on all data.</p></div>
+      <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-5 md:p-6 rounded-xl text-center hover:bg-opacity-10 transition"><i class="fas fa-fingerprint text-blue-400 text-2xl md:text-3xl mb-3 md:mb-4"></i><h3 class="font-bold text-white text-sm md:text-base mb-1 md:mb-2">Biometric Auth</h3><p class="text-gray-400 text-xs md:text-sm">Secure login with fingerprint and face ID.</p></div>
+      <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-5 md:p-6 rounded-xl text-center hover:bg-opacity-10 transition"><i class="fas fa-lock text-blue-400 text-2xl md:text-3xl mb-3 md:mb-4"></i><h3 class="font-bold text-white text-sm md:text-base mb-1 md:mb-2">Two-Factor Auth</h3><p class="text-gray-400 text-xs md:text-sm">OTP-verified transactions every time.</p></div>
+      <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-5 md:p-6 rounded-xl text-center hover:bg-opacity-10 transition"><i class="fas fa-eye-slash text-blue-400 text-2xl md:text-3xl mb-3 md:mb-4"></i><h3 class="font-bold text-white text-sm md:text-base mb-1 md:mb-2">Privacy Shield</h3><p class="text-gray-400 text-xs md:text-sm">Your data is never sold to third parties.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="py-14 md:py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="text-center mb-10 md:mb-14">
+      <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">Simple Process</div>
+      <h2 class="font-bold text-gray-900" style="font-size:clamp(1.5rem,3.5vw,2.25rem);">Get Started in Minutes</h2>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+      <div class="text-center"><div class="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold mx-auto mb-4 md:mb-5">1</div><h3 class="font-bold text-gray-900 mb-2 text-sm md:text-base">Create Account</h3><p class="text-gray-500 text-xs md:text-sm">Register in under 2 minutes.</p></div>
+      <div class="text-center"><div class="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold mx-auto mb-4 md:mb-5">2</div><h3 class="font-bold text-gray-900 mb-2 text-sm md:text-base">Verify Identity</h3><p class="text-gray-500 text-xs md:text-sm">Submit KYC for full access.</p></div>
+      <div class="text-center"><div class="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold mx-auto mb-4 md:mb-5">3</div><h3 class="font-bold text-gray-900 mb-2 text-sm md:text-base">Fund Account</h3><p class="text-gray-500 text-xs md:text-sm">Deposit via crypto easily.</p></div>
+      <div class="text-center"><div class="w-12 h-12 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold mx-auto mb-4 md:mb-5">4</div><h3 class="font-bold text-gray-900 mb-2 text-sm md:text-base">Start Banking</h3><p class="text-gray-500 text-xs md:text-sm">Enjoy global banking services.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="py-14 md:py-20 bg-gray-50">
+  <div class="max-w-3xl mx-auto px-4 text-center">
+    <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">Testimonials</div>
+    <h2 class="font-bold text-gray-900 mb-8 md:mb-12" style="font-size:clamp(1.5rem,3.5vw,2rem);">What Our Customers Say</h2>
+    <div class="relative" id="testimonials">
+      <div class="testimonial-slide active bg-white p-6 md:p-8 rounded-2xl shadow-sm"><div class="text-4xl md:text-5xl text-blue-200 mb-3 md:mb-4 font-serif">"</div><p class="text-gray-700 text-base md:text-lg leading-relaxed mb-5 md:mb-6">Co-operative Finance Bank transformed how I manage my business finances internationally. Transfers are lightning fast and the fees are unbeatable!</p><div class="flex items-center justify-center gap-3"><div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">JM</div><div class="text-left"><div class="font-bold text-gray-900 text-sm">James Mitchell</div><div class="text-gray-500 text-xs">Business Owner, UK</div></div></div><div class="flex justify-center gap-1 mt-3">{% for s in "12345" %}<i class="fas fa-star text-yellow-400 text-sm"></i>{% endfor %}</div></div>
+      <div class="testimonial-slide bg-white p-6 md:p-8 rounded-2xl shadow-sm"><div class="text-4xl md:text-5xl text-blue-200 mb-3 md:mb-4 font-serif">"</div><p class="text-gray-700 text-base md:text-lg leading-relaxed mb-5 md:mb-6">The virtual card feature is brilliant. I use it for all my online shopping with complete peace of mind and zero fraud.</p><div class="flex items-center justify-center gap-3"><div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm">SL</div><div class="text-left"><div class="font-bold text-gray-900 text-sm">Sarah Liu</div><div class="text-gray-500 text-xs">Freelancer, Singapore</div></div></div><div class="flex justify-center gap-1 mt-3">{% for s in "12345" %}<i class="fas fa-star text-yellow-400 text-sm"></i>{% endfor %}</div></div>
+      <div class="testimonial-slide bg-white p-6 md:p-8 rounded-2xl shadow-sm"><div class="text-4xl md:text-5xl text-blue-200 mb-3 md:mb-4 font-serif">"</div><p class="text-gray-700 text-base md:text-lg leading-relaxed mb-5 md:mb-6">KYC was seamless. Within 24 hours I had full access to all banking features. Truly impressive and professional service!</p><div class="flex items-center justify-center gap-3"><div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm">AK</div><div class="text-left"><div class="font-bold text-gray-900 text-sm">Ahmed Khalid</div><div class="text-gray-500 text-xs">Engineer, UAE</div></div></div><div class="flex justify-center gap-1 mt-3">{% for s in "12345" %}<i class="fas fa-star text-yellow-400 text-sm"></i>{% endfor %}</div></div>
+      <div class="testimonial-slide bg-white p-6 md:p-8 rounded-2xl shadow-sm"><div class="text-4xl md:text-5xl text-blue-200 mb-3 md:mb-4 font-serif">"</div><p class="text-gray-700 text-base md:text-lg leading-relaxed mb-5 md:mb-6">I sent money to my family in France in minutes. The exchange rates are excellent and the process was so smooth and stress-free.</p><div class="flex items-center justify-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">FO</div><div class="text-left"><div class="font-bold text-gray-900 text-sm">Jennifer Jordan</div><div class="text-gray-500 text-xs">Entrepreneur, France</div></div></div><div class="flex justify-center gap-1 mt-3">{% for s in "12345" %}<i class="fas fa-star text-yellow-400 text-sm"></i>{% endfor %}</div></div>
+      <div class="testimonial-slide bg-white p-6 md:p-8 rounded-2xl shadow-sm"><div class="text-4xl md:text-5xl text-blue-200 mb-3 md:mb-4 font-serif">"</div><p class="text-gray-700 text-base md:text-lg leading-relaxed mb-5 md:mb-6">The loan application process was the most straightforward I have ever experienced. Got approved quickly with a great interest rate.</p><div class="flex items-center justify-center gap-3"><div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-bold text-sm">RB</div><div class="text-left"><div class="font-bold text-gray-900 text-sm">Robert Brown</div><div class="text-gray-500 text-xs">Investor, Canada</div></div></div><div class="flex justify-center gap-1 mt-3">{% for s in "12345" %}<i class="fas fa-star text-yellow-400 text-sm"></i>{% endfor %}</div></div>
+    </div>
+    <div class="flex justify-center gap-2 mt-5" id="testimonial-dots"></div>
+    <div class="flex justify-center gap-3 mt-4">
+      <button onclick="prevTestimonial()" class="w-9 h-9 rounded-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition flex items-center justify-center"><i class="fas fa-chevron-left text-xs"></i></button>
+      <button onclick="nextTestimonial()" class="w-9 h-9 rounded-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition flex items-center justify-center"><i class="fas fa-chevron-right text-xs"></i></button>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<section class="py-10 md:py-16 bg-white border-y border-gray-100">
+  <div class="max-w-7xl mx-auto px-4">
+    <p class="text-center text-gray-400 text-xs md:text-sm mb-8 md:mb-10 uppercase tracking-widest font-semibold">Trusted Partners & Networks</p>
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-8 items-center justify-items-center">
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">VISA</div></div>
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">MASTERCARD</div></div>
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">SWIFT</div></div>
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">PAYPAL</div></div>
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">STRIPE</div></div>
+      <div class="partner-logo"><div class="bg-gray-100 px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold text-gray-500 text-xs md:text-sm">COINBASE</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- APP DOWNLOAD -->
+<section class="py-14 md:py-20" style="background:#0B1E3A;">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-10 md:gap-12 items-center">
+      <div>
+        <div class="text-blue-400 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">Mobile App</div>
+        <h2 class="text-white font-bold mb-4 md:mb-5" style="font-size:clamp(1.5rem,3.5vw,2.25rem);">Bank Anywhere, Anytime</h2>
+        <p class="text-gray-400 mb-6 md:mb-8 text-sm md:text-base">Download the Co-operative Finance Bank mobile app for iOS and Android. Manage accounts, transfer funds, and track transactions from your pocket.</p>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="#" class="flex items-center gap-3 bg-white bg-opacity-10 border border-white border-opacity-20 px-5 py-3 rounded-xl hover:bg-opacity-20 transition"><i class="fab fa-apple text-2xl text-white"></i><div><div class="text-xs text-gray-400">Download on</div><div class="font-bold text-white text-sm">App Store</div></div></a>
+          <a href="#" class="flex items-center gap-3 bg-white bg-opacity-10 border border-white border-opacity-20 px-5 py-3 rounded-xl hover:bg-opacity-20 transition"><i class="fab fa-google-play text-2xl text-white"></i><div><div class="text-xs text-gray-400">Get it on</div><div class="font-bold text-white text-sm">Google Play</div></div></a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 md:gap-4">
+        <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-4 md:p-5 rounded-xl"><i class="fas fa-bolt text-blue-400 text-xl md:text-2xl mb-2 md:mb-3"></i><h4 class="font-bold text-white mb-1 text-sm">Instant Alerts</h4><p class="text-gray-400 text-xs">Real-time transaction alerts.</p></div>
+        <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-4 md:p-5 rounded-xl"><i class="fas fa-bell text-blue-400 text-xl md:text-2xl mb-2 md:mb-3"></i><h4 class="font-bold text-white mb-1 text-sm">Push Notifications</h4><p class="text-gray-400 text-xs">Never miss a payment.</p></div>
+        <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-4 md:p-5 rounded-xl"><i class="fas fa-chart-bar text-blue-400 text-xl md:text-2xl mb-2 md:mb-3"></i><h4 class="font-bold text-white mb-1 text-sm">Analytics</h4><p class="text-gray-400 text-xs">Understand spending habits.</p></div>
+        <div class="bg-white bg-opacity-5 border border-white border-opacity-10 p-4 md:p-5 rounded-xl"><i class="fas fa-qrcode text-blue-400 text-xl md:text-2xl mb-2 md:mb-3"></i><h4 class="font-bold text-white mb-1 text-sm">QR Payments</h4><p class="text-gray-400 text-xs">Pay with a quick scan.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-14 md:py-20 bg-gray-50">
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="text-center mb-8 md:mb-12">
+      <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">FAQs</div>
+      <h2 class="font-bold text-gray-900" style="font-size:clamp(1.5rem,3.5vw,2rem);">Frequently Asked Questions</h2>
+    </div>
+    <div class="space-y-3">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>How do I open an account?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">Simply click "Create Account", fill in your details including name, email, and preferred currency, and your account is ready in minutes. No paperwork required.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>Is my money safe with Co-operative Finance Bank?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">Absolutely. We use bank-grade 256-bit SSL encryption, two-factor authentication, and are compliant with international financial regulations including AML/KYC standards.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>What documents do I need for KYC?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">You will need a valid government-issued ID (passport, national ID, or driver's license), a proof of address not older than 3 months, and a clear selfie holding your ID.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>How long do international transfers take?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">After admin approval, international SWIFT transfers typically process within 1–3 business days depending on the destination country and correspondent bank processing times.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>What cryptocurrencies do you accept?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">We currently support Bitcoin (BTC), Ethereum (ETH), USDT TRC20, and Solana (SOL) for deposits. More cryptocurrencies may be added in future updates.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>Can I get a virtual card immediately?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">Yes! Every account automatically receives a complimentary VISA virtual card upon registration, ready for immediate online use. You can view it in your dashboard.</div></div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100"><button onclick="toggleFaq(this)" class="w-full text-left px-5 md:px-6 py-4 font-semibold text-gray-900 flex items-center justify-between gap-3 text-sm md:text-base"><span>How do I apply for a loan?</span><i class="fas fa-chevron-down text-blue-600 transition-transform flex-shrink-0"></i></button><div class="faq-answer px-5 md:px-6 pb-4 text-gray-600 text-sm leading-relaxed">Log into your dashboard and navigate to the Loans section. Fill in the comprehensive application form including employment details, financial information, and supporting documents. Admin will review and respond within 24-48 hours.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="py-14 md:py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-10 md:gap-12">
+      <div>
+        <div class="text-blue-600 font-semibold text-xs md:text-sm mb-2 uppercase tracking-widest">Get In Touch</div>
+        <h2 class="font-bold text-gray-900 mb-4 md:mb-5" style="font-size:clamp(1.5rem,3.5vw,2rem);">Contact Us</h2>
+        <p class="text-gray-600 mb-6 md:mb-8 text-sm md:text-base">Our dedicated support team is available 24/7 to assist with any queries about your account or our services.</p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-4"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-700 flex-shrink-0"><i class="fas fa-envelope"></i></div><div><div class="font-semibold text-gray-900 text-sm">Email</div><div class="text-gray-600 text-sm">cooperativefinancebank@mail.com</div></div></div>
+          <div class="flex items-center gap-4"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-700 flex-shrink-0"><i class="fas fa-phone"></i></div><div><div class="font-semibold text-gray-900 text-sm">Phone</div><div class="text-gray-600 text-sm">+1 (501) 237-55**</div></div></div>
+          <div class="flex items-center gap-4"><div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-700 flex-shrink-0"><i class="fab fa-whatsapp"></i></div><div><div class="font-semibold text-gray-900 text-sm">WhatsApp</div><div class="text-gray-600 text-sm">+ (501) 237-55**</div></div></div>
+          <div class="flex items-center gap-4"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-700 flex-shrink-0"><i class="fas fa-map-marker-alt"></i></div><div><div class="font-semibold text-gray-900 text-sm">Address</div><div class="text-gray-600 text-sm">3511 Washington st suite 100, Jamaica plain, Ma 22012 United States</div></div></div>
+        </div>
+      </div>
+      <div class="bg-gray-50 p-6 md:p-8 rounded-2xl">
+        <h3 class="font-bold text-gray-900 mb-5 text-lg">Send a Message</h3>
+        <form class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label class="text-sm text-gray-600 block mb-1">Full Name</label><input type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="Your name"></div>
+            <div><label class="text-sm text-gray-600 block mb-1">Email</label><input type="email" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="your@email.com"></div>
+          </div>
+          <div><label class="text-sm text-gray-600 block mb-1">Subject</label><input type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="How can we help?"></div>
+          <div><label class="text-sm text-gray-600 block mb-1">Message</label><textarea rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 resize-none" placeholder="Your message..."></textarea></div>
+          <button type="submit" class="btn-primary w-full text-center py-3 rounded-lg">Send Message <i class="fas fa-paper-plane ml-2"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-white py-12 md:py-16">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10 md:mb-12">
+      <div class="col-span-2 md:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center"><i class="fas fa-university text-white text-sm"></i></div>
+          <span class="font-bold text-lg">Co-operative Finance<span class="text-blue-400">Bank</span></span>
+        </div>
+        <p class="text-gray-400 text-sm leading-relaxed mb-4">Secure, fast, and globally connected digital banking for individuals and businesses worldwide.</p>
+        <!-- SOCIAL ICONS - Real app icons -->
+        <div class="flex gap-3">
+          <a href="#" class="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80" style="background:#1877F2;" title="Facebook">
+            <i class="fab fa-facebook-f text-white text-sm"></i>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80" style="background:#000000;" title="X (Twitter)">
+            <i class="fab fa-x-twitter text-white text-sm"></i>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80" style="background:#0A66C2;" title="LinkedIn">
+            <i class="fab fa-linkedin-in text-white text-sm"></i>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-lg flex items-center justify-center transition hover:opacity-80" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);" title="Instagram">
+            <i class="fab fa-instagram text-white text-sm"></i>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-gray-300">Services</h4>
+        <ul class="space-y-2 text-gray-400 text-sm">
+          <li><a href="#" class="hover:text-white transition">International Transfers</a></li>
+          <li><a href="#" class="hover:text-white transition">Virtual Cards</a></li>
+          <li><a href="#" class="hover:text-white transition">Crypto Deposits</a></li>
+          <li><a href="#" class="hover:text-white transition">Personal Loans</a></li>
+          <li><a href="#" class="hover:text-white transition">Business Banking</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-gray-300">Company</h4>
+        <ul class="space-y-2 text-gray-400 text-sm">
+          <li><a href="#about" class="hover:text-white transition">About Us</a></li>
+          <li><a href="#" class="hover:text-white transition">Careers</a></li>
+          <li><a href="#" class="hover:text-white transition">Press</a></li>
+          <li><a href="#contact" class="hover:text-white transition">Contact</a></li>
+          <li><a href="#" class="hover:text-white transition">Blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold mb-4 text-xs uppercase tracking-widest text-gray-300">Legal</h4>
+        <ul class="space-y-2 text-gray-400 text-sm">
+          <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+          <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+          <li><a href="#" class="hover:text-white transition">Cookie Policy</a></li>
+          <li><a href="#" class="hover:text-white transition">AML Policy</a></li>
+          <li><a href="#" class="hover:text-white transition">Compliance</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-gray-500 text-sm">
+      <p>&copy; 2024 Co-operative Finance Bank. All rights reserved. FDIC Insured.</p>
+      <div class="flex gap-4">
+        <span class="flex items-center gap-1"><i class="fas fa-shield-alt text-green-500"></i> Secured</span>
+        <span class="flex items-center gap-1"><i class="fas fa-lock text-blue-400"></i> Encrypted</span>
+        <span class="flex items-center gap-1"><i class="fas fa-check-circle text-yellow-400"></i> Regulated</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+// ─── Hero Carousel ────────────────────────────────────────────────────────────
+let currentSlide = 0;
+const slides = document.querySelectorAll('.hero-slide');
+const dotsEl = document.getElementById('dots');
+slides.forEach((_,i)=>{
+  const d = document.createElement('button');
+  d.className = `w-2 h-2 rounded-full transition-all ${i===0?'bg-white w-5':'bg-white bg-opacity-40'}`;
+  d.setAttribute('aria-label', `Slide ${i+1}`);
+  d.onclick = () => goSlide(i);
+  dotsEl.appendChild(d);
+});
+function goSlide(n){
+  slides[currentSlide].classList.remove('active');
+  dotsEl.children[currentSlide].className='w-2 h-2 rounded-full transition-all bg-white bg-opacity-40';
+  currentSlide=(n+slides.length)%slides.length;
+  slides[currentSlide].classList.add('active');
+  dotsEl.children[currentSlide].className='w-5 h-2 rounded-full transition-all bg-white';
+}
+function nextSlide(){goSlide(currentSlide+1);}
+function prevSlide(){goSlide(currentSlide-1);}
+setInterval(nextSlide, 5000);
+
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+let curTest=0;
+const tests=document.querySelectorAll('.testimonial-slide');
+const testDots=document.getElementById('testimonial-dots');
+tests.forEach((_,i)=>{
+  const d=document.createElement('button');
+  d.className=`w-2 h-2 rounded-full transition-all ${i===0?'bg-blue-600 w-5':'bg-gray-300'}`;
+  d.onclick=()=>goTest(i);
+  testDots.appendChild(d);
+});
+function goTest(n){
+  tests[curTest].classList.remove('active');
+  testDots.children[curTest].className='w-2 h-2 rounded-full transition-all bg-gray-300';
+  curTest=(n+tests.length)%tests.length;
+  tests[curTest].classList.add('active');
+  testDots.children[curTest].className='w-5 h-2 rounded-full transition-all bg-blue-600';
+}
+function nextTestimonial(){goTest(curTest+1);}
+function prevTestimonial(){goTest(curTest-1);}
+setInterval(nextTestimonial, 6000);
+
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+function toggleFaq(btn){
+  const answer=btn.nextElementSibling;
+  const icon=btn.querySelector('i');
+  const isOpen=answer.classList.contains('open');
+  document.querySelectorAll('.faq-answer').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.faq-answer+*,button i.fas.fa-chevron-down').forEach(i=>i.style.transform='rotate(0deg)');
+  if(!isOpen){answer.classList.add('open');icon.style.transform='rotate(180deg)';}
+}
+
+// ─── Mobile Menu ──────────────────────────────────────────────────────────────
+function toggleMobileMenu(){
+  const m=document.getElementById('mobile-menu');
+  const icon=document.getElementById('menuIcon');
+  const open=m.classList.toggle('hidden');
+  icon.className=open?'fas fa-bars text-lg':'fas fa-times text-lg';
+}
+function closeMobileMenu(){
+  document.getElementById('mobile-menu').classList.add('hidden');
+  document.getElementById('menuIcon').className='fas fa-bars text-lg';
+}
+
+// ─── Crypto Ticker ────────────────────────────────────────────────────────────
+async function loadTicker(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,tether,binancecoin,ripple,dogecoin,cardano&vs_currencies=usd&include_24hr_change=true');
+    const d=await r.json();
+    const names={bitcoin:'BTC',ethereum:'ETH',solana:'SOL',tether:'USDT',binancecoin:'BNB',ripple:'XRP',dogecoin:'DOGE',cardano:'ADA'};
+    let html='';
+    Object.entries(d).forEach(([k,v])=>{
+      const chg=v.usd_24h_change||0;
+      const col=chg>=0?'#22C55E':'#EF4444';
+      const arr=chg>=0?'▲':'▼';
+      html+=`<span class="mr-10"><span class="text-gray-400">${names[k]||k}</span> <span class="text-white font-bold">$${v.usd.toLocaleString()}</span> <span style="color:${col}">${arr}${Math.abs(chg).toFixed(2)}%</span></span>`;
+    });
+    const el=document.getElementById('crypto-ticker');
+    el.innerHTML=html+html;
+  }catch(e){console.log('Ticker unavailable');}
+}
+loadTicker();
+setInterval(loadTicker,60000);
+
+// ─── Custom Language Selector ─────────────────────────────────────────────────
+const LANGUAGES = [
+  {code:'',name:'— Select Language —'},
+  {code:'af',name:'🇿🇦 Afrikaans'},{code:'sq',name:'🇦🇱 Albanian'},{code:'am',name:'🇪🇹 Amharic'},
+  {code:'ar',name:'🇸🇦 Arabic'},{code:'hy',name:'🇦🇲 Armenian'},{code:'az',name:'🇦🇿 Azerbaijani'},
+  {code:'eu',name:'Basque'},{code:'be',name:'🇧🇾 Belarusian'},{code:'bn',name:'🇧🇩 Bengali'},
+  {code:'bs',name:'🇧🇦 Bosnian'},{code:'bg',name:'🇧🇬 Bulgarian'},{code:'ca',name:'Catalan'},
+  {code:'ceb',name:'Cebuano'},{code:'zh-CN',name:'🇨🇳 Chinese (Simplified)'},{code:'zh-TW',name:'🇹🇼 Chinese (Traditional)'},
+  {code:'co',name:'Corsican'},{code:'hr',name:'🇭🇷 Croatian'},{code:'cs',name:'🇨🇿 Czech'},
+  {code:'da',name:'🇩🇰 Danish'},{code:'nl',name:'🇳🇱 Dutch'},{code:'en',name:'🇬🇧 English'},
+  {code:'eo',name:'Esperanto'},{code:'et',name:'🇪🇪 Estonian'},{code:'fi',name:'🇫🇮 Finnish'},
+  {code:'fr',name:'🇫🇷 French'},{code:'fy',name:'Frisian'},{code:'gl',name:'Galician'},
+  {code:'ka',name:'🇬🇪 Georgian'},{code:'de',name:'🇩🇪 German'},{code:'el',name:'🇬🇷 Greek'},
+  {code:'gu',name:'🇮🇳 Gujarati'},{code:'ht',name:'🇭🇹 Haitian Creole'},{code:'ha',name:'Hausa'},
+  {code:'haw',name:'Hawaiian'},{code:'iw',name:'🇮🇱 Hebrew'},{code:'hi',name:'🇮🇳 Hindi'},
+  {code:'hmn',name:'Hmong'},{code:'hu',name:'🇭🇺 Hungarian'},{code:'is',name:'🇮🇸 Icelandic'},
+  {code:'ig',name:'🇳🇬 Igbo'},{code:'id',name:'🇮🇩 Indonesian'},{code:'ga',name:'🇮🇪 Irish'},
+  {code:'it',name:'🇮🇹 Italian'},{code:'ja',name:'🇯🇵 Japanese'},{code:'jw',name:'🇮🇩 Javanese'},
+  {code:'kn',name:'🇮🇳 Kannada'},{code:'kk',name:'🇰🇿 Kazakh'},{code:'km',name:'🇰🇭 Khmer'},
+  {code:'rw',name:'🇷🇼 Kinyarwanda'},{code:'ko',name:'🇰🇷 Korean'},{code:'ku',name:'Kurdish'},
+  {code:'ky',name:'🇰🇬 Kyrgyz'},{code:'lo',name:'🇱🇦 Lao'},{code:'la',name:'Latin'},
+  {code:'lv',name:'🇱🇻 Latvian'},{code:'lt',name:'🇱🇹 Lithuanian'},{code:'lb',name:'🇱🇺 Luxembourgish'},
+  {code:'mk',name:'🇲🇰 Macedonian'},{code:'mg',name:'🇲🇬 Malagasy'},{code:'ms',name:'🇲🇾 Malay'},
+  {code:'ml',name:'🇮🇳 Malayalam'},{code:'mt',name:'🇲🇹 Maltese'},{code:'mi',name:'🇳🇿 Maori'},
+  {code:'mr',name:'🇮🇳 Marathi'},{code:'mn',name:'🇲🇳 Mongolian'},{code:'my',name:'🇲🇲 Myanmar'},
+  {code:'ne',name:'🇳🇵 Nepali'},{code:'no',name:'🇳🇴 Norwegian'},{code:'ny',name:'🇲🇼 Nyanja'},
+  {code:'or',name:'🇮🇳 Odia'},{code:'ps',name:'🇦🇫 Pashto'},{code:'fa',name:'🇮🇷 Persian'},
+  {code:'pl',name:'🇵🇱 Polish'},{code:'pt',name:'🇵🇹 Portuguese'},{code:'pa',name:'🇮🇳 Punjabi'},
+  {code:'ro',name:'🇷🇴 Romanian'},{code:'ru',name:'🇷🇺 Russian'},{code:'sm',name:'🇼🇸 Samoan'},
+  {code:'gd',name:'Scottish Gaelic'},{code:'sr',name:'🇷🇸 Serbian'},{code:'st',name:'🇿🇦 Sesotho'},
+  {code:'sn',name:'🇿🇼 Shona'},{code:'sd',name:'🇵🇰 Sindhi'},{code:'si',name:'🇱🇰 Sinhala'},
+  {code:'sk',name:'🇸🇰 Slovak'},{code:'sl',name:'🇸🇮 Slovenian'},{code:'so',name:'🇸🇴 Somali'},
+  {code:'es',name:'🇪🇸 Spanish'},{code:'su',name:'Sundanese'},{code:'sw',name:'🇰🇪 Swahili'},
+  {code:'sv',name:'🇸🇪 Swedish'},{code:'tl',name:'🇵🇭 Tagalog'},{code:'tg',name:'🇹🇯 Tajik'},
+  {code:'ta',name:'🇮🇳 Tamil'},{code:'tt',name:'🇷🇺 Tatar'},{code:'te',name:'🇮🇳 Telugu'},
+  {code:'th',name:'🇹🇭 Thai'},{code:'tr',name:'🇹🇷 Turkish'},{code:'tk',name:'🇹🇲 Turkmen'},
+  {code:'uk',name:'🇺🇦 Ukrainian'},{code:'ur',name:'🇵🇰 Urdu'},{code:'ug',name:'Uyghur'},
+  {code:'uz',name:'🇺🇿 Uzbek'},{code:'vi',name:'🇻🇳 Vietnamese'},{code:'cy',name:'🇬🇧 Welsh'},
+  {code:'xh',name:'🇿🇦 Xhosa'},{code:'yi',name:'Yiddish'},{code:'yo',name:'🇳🇬 Yoruba'},
+  {code:'zu',name:'🇿🇦 Zulu'},
+];
+
+let currentLangCode = '';
+
+function buildLangList(filter=''){
+  const list=document.getElementById('langList');
+  list.innerHTML='';
+  LANGUAGES.filter(l=>!filter||l.name.toLowerCase().includes(filter.toLowerCase())).forEach(lang=>{
+    if(!lang.code){return;}
+    const div=document.createElement('div');
+    div.className=`lang-option${lang.code===currentLangCode?' active':''}`;
+    div.textContent=lang.name;
+    div.onclick=()=>selectLanguage(lang.code, lang.name);
+    list.appendChild(div);
+  });
+}
+
+function filterLangs(val){buildLangList(val);}
+
+function toggleLangMenu(e){
+  e.stopPropagation();
+  const menu=document.getElementById('langMenu');
+  menu.classList.toggle('open');
+  if(menu.classList.contains('open')){
+    buildLangList();
+    document.getElementById('langSearch').focus();
+  }
+}
+
+function selectLanguage(code, name){
+  currentLangCode=code;
+  document.getElementById('currentLang').textContent=name.replace(/^[^\s]+\s/,'').substring(0,6)||'EN';
+  document.getElementById('langMenu').classList.remove('open');
+
+  // Trigger Google Translate
+  const sel=document.querySelector('.goog-te-combo');
+  if(sel){sel.value=code;sel.dispatchEvent(new Event('change'));}
+  else{
+    // fallback: reload with translate cookie
+    document.cookie=`googtrans=/en/${code};path=/;domain=.${location.hostname}`;
+    document.cookie=`googtrans=/en/${code};path=/`;
+    location.reload();
+  }
+}
+
+document.addEventListener('click',function(e){
+  if(!document.getElementById('langMenu').contains(e.target)&&e.target.id!=='langBtn'){
+    document.getElementById('langMenu').classList.remove('open');
+  }
+});
+
+// Init Google Translate silently
+function googleTranslateElementInit(){
+  new google.translate.TranslateElement({
+    pageLanguage:'en',
+    includedLanguages:'',
+    layout:google.translate.TranslateElement.InlineLayout.SIMPLE,
+    autoDisplay:false
+  },'google_translate_element');
+}
+</script>
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+{% endblock %}

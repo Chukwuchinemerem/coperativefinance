@@ -1,0 +1,136 @@
+{% extends 'banking/base.html' %}
+{% block body %}
+<div class="flex h-screen overflow-hidden" style="background:#0f172a;">
+
+<div id="admin-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-20 hidden md:hidden" onclick="closeAdminSidebar()"></div>
+
+<aside id="admin-sidebar" class="mobile-sidebar md:translate-x-0 fixed md:relative z-30 w-64 h-full flex flex-col overflow-y-auto" style="background:#0B1E3A;min-height:100vh;flex-shrink:0;">
+
+  <!-- Logo -->
+  <div class="p-5 border-b border-blue-900 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-red-700 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-shield-halved text-white text-sm"></i>
+      </div>
+      <div>
+        <div class="font-bold text-white text-sm leading-tight">Admin Panel</div>
+        <div class="text-red-400 text-xs">Co-operative Finance</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin badge -->
+  <div class="mx-3 mt-3 bg-red-900 bg-opacity-30 border border-red-800 rounded-xl p-3 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <i class="fas fa-user-shield text-red-400 text-sm"></i>
+      <div>
+        <div class="text-red-300 text-xs font-bold">{{ request.user.username }}</div>
+        <div class="text-red-500 text-xs">Super Administrator</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 p-3 space-y-0.5 mt-2">
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pb-1">Overview</p>
+    <a href="/admin_dashboard/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+      <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+    </a>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Users</p>
+    <a href="/admin_dashboard/users/" class="sidebar-link {% if 'admin_user' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-users"></i><span>All Users</span>
+    </a>
+    <a href="/admin_dashboard/users/create/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_create_user' %}active{% endif %}">
+      <i class="fas fa-user-plus"></i><span>Create User</span>
+    </a>
+    <!-- EDIT USER shortcut — visible & prominent -->
+    <div class="px-3 pt-1">
+      <div class="text-gray-600 text-xs font-semibold uppercase tracking-widest pb-1">Quick Edit User</div>
+      <form action="" method="GET" onsubmit="goEditUser(event)" class="flex gap-1">
+        <input id="quickEditId" type="text" placeholder="User ID / email..." class="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 min-w-0">
+        <button type="submit" class="bg-blue-700 text-white px-2.5 py-1.5 rounded-lg text-xs hover:bg-blue-600 transition flex-shrink-0" title="Search & Edit">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+    </div>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Approvals</p>
+    <a href="/admin_dashboard/kyc/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_kyc' %}active{% endif %}">
+      <i class="fas fa-id-badge"></i><span>KYC Review</span>
+    </a>
+    <a href="/admin_dashboard/transfers/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_transfers' %}active{% endif %}">
+      <i class="fas fa-exchange-alt"></i><span>Transfers</span>
+    </a>
+    <a href="/admin_dashboard/deposits/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_deposits' %}active{% endif %}">
+      <i class="fas fa-arrow-down"></i><span>Deposits</span>
+    </a>
+    <a href="/admin_dashboard/loans/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_loans' %}active{% endif %}">
+      <i class="fas fa-hand-holding-usd"></i><span>Loans</span>
+    </a>
+    <a href="/admin_dashboard/card-orders/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_card_orders' %}active{% endif %}">
+      <i class="fas fa-credit-card"></i><span>Card Orders</span>
+    </a>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Settings</p>
+    <a href="/admin_dashboard/wallets/" class="sidebar-link {% if request.resolver_match.url_name == 'admin_wallets' %}active{% endif %}">
+      <i class="fas fa-wallet"></i><span>Wallet Config</span>
+    </a>
+  </nav>
+
+  <div class="p-3 border-t border-blue-900 flex-shrink-0 space-y-0.5">
+    <a href="/" class="sidebar-link text-gray-400"><i class="fas fa-home"></i><span>View Site</span></a>
+    <a href="/logout/" class="sidebar-link text-red-400 hover:bg-red-950 hover:text-red-300"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+</aside>
+
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <header class="flex-shrink-0 border-b border-gray-800 px-4 md:px-6 py-3.5 flex items-center justify-between" style="background:#0f172a;">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleAdminSidebar()" class="md:hidden text-gray-400 hover:text-white p-1">
+        <i class="fas fa-bars text-lg" id="adminMenuIcon"></i>
+      </button>
+      <h1 class="text-white font-bold text-base">{% block admin_title %}Admin Dashboard{% endblock %}</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Quick create user button in header -->
+      <a href="/admin_dashboard/users/create/" class="hidden sm:flex items-center gap-1.5 bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-600 transition font-semibold">
+        <i class="fas fa-user-plus"></i> New User
+      </a>
+      <a href="/admin_dashboard/users/" class="hidden sm:flex items-center gap-1.5 bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-700 transition font-semibold">
+        <i class="fas fa-pen-to-square"></i> Edit Users
+      </a>
+      <div class="w-8 h-8 bg-red-800 rounded-full flex items-center justify-center text-white text-xs font-bold">
+        {{ request.user.username|slice:":2"|upper }}
+      </div>
+    </div>
+  </header>
+  <main class="flex-1 overflow-y-auto p-4 md:p-6" style="background:#0f172a;">{% block admin_content %}{% endblock %}</main>
+</div>
+
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleAdminSidebar() {
+  const sb = document.getElementById('admin-sidebar');
+  const ov = document.getElementById('admin-overlay');
+  const icon = document.getElementById('adminMenuIcon');
+  const isOpen = sb.classList.toggle('open');
+  ov.classList.toggle('hidden', !isOpen);
+  icon.className = isOpen ? 'fas fa-times text-lg' : 'fas fa-bars text-lg';
+}
+function closeAdminSidebar() {
+  document.getElementById('admin-sidebar').classList.remove('open');
+  document.getElementById('admin-overlay').classList.add('hidden');
+  document.getElementById('adminMenuIcon').className = 'fas fa-bars text-lg';
+}
+function goEditUser(e) {
+  e.preventDefault();
+  const val = document.getElementById('quickEditId').value.trim();
+  if (val) {
+    window.location.href = '/admin_dashboard/users/?search=' + encodeURIComponent(val);
+  }
+}
+</script>
+{% block admin_js %}{% endblock %}
+{% endblock %}

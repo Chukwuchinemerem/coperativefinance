@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+
+# Django
+*.sqlite3
+staticfiles/
+local_settings.py
+
+# Media (use Render disk in production)
+media/profiles/*
+media/kyc/*
+media/loans/*
+!media/**/.gitkeep
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

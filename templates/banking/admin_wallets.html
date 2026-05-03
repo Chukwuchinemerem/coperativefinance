@@ -1,0 +1,66 @@
+{% extends 'banking/admin_base.html' %}
+{% block admin_title %}Wallet Configuration{% endblock %}
+{% block admin_content %}
+<div class="fade-in max-w-3xl mx-auto space-y-6">
+  <div class="card-dark p-6">
+    <h2 class="text-white font-bold text-xl mb-5">Add / Update Wallet</h2>
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <div><label class="text-gray-400 text-sm block mb-1">Wallet Purpose</label>
+        <select name="wallet_type" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+          <option value="crypto">Deposit Wallet (for crypto deposits)</option>
+          <option value="card">Card Order Wallet (for $20 card payments)</option>
+        </select>
+      </div>
+      <div><label class="text-gray-400 text-sm block mb-1">Cryptocurrency</label>
+        <select name="crypto_type" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+          <option value="BTC">Bitcoin (BTC)</option>
+          <option value="USDT_TRC20">USDT TRC20</option>
+          <option value="ETH">Ethereum (ETH)</option>
+          <option value="SOL">Solana (SOL)</option>
+        </select>
+      </div>
+      <div><label class="text-gray-400 text-sm block mb-1">Wallet Address *</label>
+        <input name="wallet_address" required placeholder="Paste wallet address here..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500 font-mono">
+      </div>
+      <button type="submit" class="btn-primary py-2.5 px-6 rounded-lg text-sm font-bold"><i class="fas fa-save mr-2"></i>Save Wallet</button>
+    </form>
+  </div>
+
+  <div class="card-dark p-6">
+    <h3 class="text-white font-bold mb-4">Deposit Wallets</h3>
+    {% if crypto_wallets %}
+    <div class="space-y-3">
+      {% for w in crypto_wallets %}
+      <div class="bg-gray-800 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-white font-bold text-sm">{{ w.crypto_type }}</div>
+          <div class="text-green-400 font-mono text-xs break-all mt-1">{{ w.wallet_address }}</div>
+          <div class="text-gray-500 text-xs mt-1">Updated: {{ w.updated_at|date:"M d, Y" }}</div>
+        </div>
+        <span class="flex-shrink-0 {% if w.is_active %}text-green-400{% else %}text-gray-600{% endif %} text-xs font-semibold">{% if w.is_active %}● Active{% else %}○ Inactive{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<p class="text-gray-500 text-sm">No deposit wallets configured yet.</p>{% endif %}
+  </div>
+
+  <div class="card-dark p-6">
+    <h3 class="text-white font-bold mb-4">Card Order Wallets</h3>
+    {% if card_wallets %}
+    <div class="space-y-3">
+      {% for w in card_wallets %}
+      <div class="bg-gray-800 rounded-xl p-4 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-white font-bold text-sm">{{ w.crypto_type }}</div>
+          <div class="text-green-400 font-mono text-xs break-all mt-1">{{ w.wallet_address }}</div>
+          <div class="text-gray-500 text-xs mt-1">Updated: {{ w.updated_at|date:"M d, Y" }}</div>
+        </div>
+        <span class="flex-shrink-0 {% if w.is_active %}text-green-400{% else %}text-gray-600{% endif %} text-xs font-semibold">{% if w.is_active %}● Active{% else %}○ Inactive{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<p class="text-gray-500 text-sm">No card order wallets configured yet.</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

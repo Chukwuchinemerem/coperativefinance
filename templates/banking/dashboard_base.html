@@ -1,0 +1,177 @@
+{% extends 'banking/base.html' %}
+{% block body %}
+<div class="flex h-screen overflow-hidden" style="background:#0f172a;">
+
+<!-- Mobile Sidebar Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-60 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="mobile-sidebar md:translate-x-0 fixed md:relative z-30 w-64 h-full flex flex-col overflow-y-auto" style="background:#0B1E3A;min-height:100vh;flex-shrink:0;">
+
+  <!-- Logo -->
+  <div class="p-5 border-b border-blue-900 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-blue-700 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-university text-white text-sm"></i>
+      </div>
+      <div>
+        <div class="font-bold text-white text-sm leading-tight">Co-operative Finance</div>
+        <div class="text-blue-400 text-xs">Digital Bank</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Block -->
+  <div class="p-4 border-b border-blue-900 flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <!-- Profile photo circle -->
+      <div class="flex-shrink-0">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="Profile"
+            class="w-11 h-11 rounded-full object-cover border-2 border-blue-600">
+        {% else %}
+          <div class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center text-white font-bold text-base border-2 border-blue-600">
+            {{ user.full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="overflow-hidden flex-1">
+        <div class="text-white font-semibold text-sm truncate">{{ user.full_name|default:user.username }}</div>
+        <div class="text-blue-400 text-xs truncate">{{ user.get_account_type_display }}</div>
+        <div class="flex items-center gap-1 mt-0.5">
+          <span class="w-1.5 h-1.5 rounded-full {% if user.kyc_status == 'approved' %}bg-green-400{% elif user.kyc_status == 'pending' %}bg-yellow-400{% else %}bg-gray-500{% endif %}"></span>
+          <span class="text-xs {% if user.kyc_status == 'approved' %}text-green-400{% elif user.kyc_status == 'pending' %}text-yellow-400{% else %}text-gray-500{% endif %}">
+            {{ user.get_kyc_status_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 p-3 space-y-0.5">
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-2 pb-1">Main</p>
+    <a href="/dashboard/" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="fas fa-th-large"></i><span>Overview</span>
+    </a>
+    <a href="/dashboard/profile/" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+      <i class="fas fa-user-circle"></i><span>My Profile</span>
+    </a>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Banking</p>
+    <a href="/dashboard/transfer/" class="sidebar-link {% if request.resolver_match.url_name == 'transfer' %}active{% endif %}">
+      <i class="fas fa-paper-plane"></i><span>Send Money</span>
+    </a>
+    <a href="/dashboard/transactions/" class="sidebar-link {% if request.resolver_match.url_name == 'transactions' %}active{% endif %}">
+      <i class="fas fa-list-alt"></i><span>Transactions</span>
+    </a>
+    <a href="/dashboard/deposit/" class="sidebar-link {% if request.resolver_match.url_name == 'deposit' %}active{% endif %}">
+      <i class="fab fa-bitcoin"></i><span>Crypto Deposit</span>
+    </a>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Cards & Loans</p>
+    <a href="/dashboard/card/" class="sidebar-link {% if request.resolver_match.url_name == 'virtual_card' %}active{% endif %}">
+      <i class="fas fa-credit-card"></i><span>Virtual Card</span>
+    </a>
+    <a href="/dashboard/card-order/" class="sidebar-link {% if request.resolver_match.url_name == 'card_order' %}active{% endif %}">
+      <i class="fas fa-shipping-fast"></i><span>Order Card</span>
+    </a>
+    <a href="/dashboard/loans/" class="sidebar-link {% if request.resolver_match.url_name == 'loans' %}active{% endif %}">
+      <i class="fas fa-hand-holding-usd"></i><span>Loans</span>
+    </a>
+
+    <p class="text-gray-600 text-xs font-semibold uppercase tracking-widest px-3 pt-3 pb-1">Account</p>
+    <a href="/dashboard/kyc/" class="sidebar-link {% if request.resolver_match.url_name == 'kyc' %}active{% endif %}">
+      <i class="fas fa-id-badge"></i>
+      <span>KYC Verify</span>
+      {% if user.kyc_status == 'not_submitted' %}
+        <span class="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">!</span>
+      {% endif %}
+    </a>
+    <a href="/dashboard/notifications/" class="sidebar-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+      <i class="fas fa-bell"></i>
+      <span>Notifications</span>
+      {% if unread_count %}
+        <span class="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">{{ unread_count }}</span>
+      {% endif %}
+    </a>
+  </nav>
+
+  <!-- Logout -->
+  <div class="p-3 border-t border-blue-900 flex-shrink-0">
+    <a href="/logout/" class="sidebar-link text-red-400 hover:bg-red-950 hover:text-red-300">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+  <!-- Top Header Bar -->
+  <header class="flex-shrink-0 border-b border-gray-800 px-4 md:px-6 py-3.5 flex items-center justify-between" style="background:#0f172a;">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white p-1">
+        <i class="fas fa-bars text-lg" id="sidebarMenuIcon"></i>
+      </button>
+      <div>
+        <h1 class="text-white font-bold text-base leading-tight">{% block page_title %}Dashboard{% endblock %}</h1>
+        <p class="text-gray-500 text-xs hidden md:block">{% block page_subtitle %}{% endblock %}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Balance chip -->
+      <div class="hidden sm:flex items-center gap-2 bg-gray-800 rounded-xl px-3 py-1.5">
+        <span class="text-gray-400 text-xs">Balance</span>
+        <span class="text-green-400 font-bold text-sm">{{ user.get_currency_symbol }}{{ user.balance|floatformat:2 }}</span>
+      </div>
+      <!-- Notification bell -->
+      <a href="/dashboard/notifications/" class="relative text-gray-400 hover:text-white p-1.5 transition">
+        <i class="fas fa-bell text-lg"></i>
+        {% if unread_count %}
+          <span class="absolute top-0 right-0 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center" style="font-size:10px;">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+      <!-- Avatar -->
+      <a href="/dashboard/profile/" class="flex-shrink-0">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="Profile"
+            class="w-8 h-8 rounded-full object-cover border-2 border-blue-600">
+        {% else %}
+          <div class="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-xs border-2 border-blue-600">
+            {{ user.full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+          </div>
+        {% endif %}
+      </a>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1 overflow-y-auto p-4 md:p-6" style="background:#0f172a;">
+    {% block dashboard_content %}{% endblock %}
+  </main>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const icon = document.getElementById('sidebarMenuIcon');
+  const isOpen = sb.classList.toggle('open');
+  ov.classList.toggle('hidden', !isOpen);
+  icon.className = isOpen ? 'fas fa-times text-lg' : 'fas fa-bars text-lg';
+}
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.remove('open');
+  ov.classList.add('hidden');
+  document.getElementById('sidebarMenuIcon').className = 'fas fa-bars text-lg';
+}
+</script>
+{% block page_js %}{% endblock %}
+{% endblock %}

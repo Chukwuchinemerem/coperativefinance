@@ -1,0 +1,42 @@
+{% extends 'banking/admin_base.html' %}
+{% block admin_title %}Card Orders{% endblock %}
+{% block admin_content %}
+<div class="fade-in">
+  <h2 class="text-white font-bold text-xl mb-5">Physical Card Orders</h2>
+  <div class="space-y-4">
+    {% for order in orders %}
+    <div class="card-dark p-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="text-white font-bold">{{ order.user.full_name|default:order.user.username }}</div>
+          <div class="text-gray-400 text-sm">{{ order.user.email }} | Payment: <span class="text-orange-400">{{ order.payment_crypto }}</span></div>
+          <div class="text-gray-500 text-xs mt-1 break-all">TX Hash: <span class="text-green-400 font-mono">{{ order.tx_hash|default:"Not provided" }}</span></div>
+          <div class="text-gray-400 text-sm mt-1">Delivery: {{ order.delivery_address|truncatechars:80 }}</div>
+          <div class="text-gray-500 text-xs">Ordered: {{ order.created_at|date:"M d, Y H:i" }}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-white font-bold">${{ order.amount_paid }}</div>
+          <span class="status-badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+      </div>
+      {% if order.status == 'pending' %}
+      <div class="mt-4 flex flex-col md:flex-row gap-3">
+        <form method="POST" action="/admin_dashboard/card-orders/{{ order.id }}/approve/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Delivery note..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 transition whitespace-nowrap"><i class="fas fa-check mr-1"></i>Approve</button>
+        </form>
+        <form method="POST" action="/admin_dashboard/card-orders/{{ order.id }}/reject/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Rejection reason..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition whitespace-nowrap"><i class="fas fa-times mr-1"></i>Reject</button>
+        </form>
+      </div>
+      {% elif order.admin_note %}<div class="mt-2 text-gray-500 text-xs"><i class="fas fa-comment mr-1"></i>{{ order.admin_note }}</div>{% endif %}
+    </div>
+    {% empty %}
+    <div class="card-dark p-12 text-center text-gray-500"><i class="fas fa-credit-card text-5xl mb-4 text-gray-700"></i><p class="font-semibold">No card orders yet.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

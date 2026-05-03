@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>{% block title %}Co-operative Finance Bank{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; font-family: 'Poppins', sans-serif; }
+  .bg-primary { background-color: #0B1E3A; }
+  .bg-secondary { background-color: #0F2A4A; }
+  .text-accent { color: #2563EB; }
+  .btn-primary { background-color: #1D4ED8; color: white; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; transition: all .2s; display:inline-block; text-decoration:none; }
+  .btn-primary:hover { background-color: #1e40af; transform: translateY(-1px); }
+  .card-dark { background-color: #1E293B; border-radius: 12px; }
+  .sidebar-link { display:flex; align-items:center; gap:12px; padding:9px 14px; border-radius:8px; color:#94a3b8; transition:all .2s; font-size:0.875rem; text-decoration:none; }
+  .sidebar-link:hover, .sidebar-link.active { background:#1D4ED8; color:white; }
+  .sidebar-link i { width:18px; text-align:center; }
+  .status-badge { padding:2px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; display:inline-block; }
+  .badge-pending { background:#fef3c7; color:#92400e; }
+  .badge-approved { background:#dcfce7; color:#166534; }
+  .badge-rejected { background:#fee2e2; color:#991b1b; }
+  .badge-not_submitted { background:#f3f4f6; color:#6b7280; }
+  .fade-in { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .mobile-sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+  .mobile-sidebar.open { transform: translateX(0); }
+  /* Suppress default Google Translate bar */
+  #goog-te-banner-frame, .skiptranslate { display:none !important; }
+  body { top:0 !important; }
+  .goog-te-gadget { display:none !important; }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+{% block body %}{% endblock %}
+
+
+
+<!-- Flash Messages -->
+{% if messages %}
+<div style="position:fixed;top:76px;right:16px;z-index:9998;max-width:340px;width:calc(100% - 32px);" id="flash-messages">
+{% for msg in messages %}
+<div class="fade-in mb-2 p-3 rounded-xl shadow-lg text-white text-sm font-medium
+  {% if msg.tags == 'success' %}bg-green-600
+  {% elif msg.tags == 'error' %}bg-red-600
+  {% elif msg.tags == 'warning' %}bg-yellow-600
+  {% else %}bg-blue-600{% endif %}">
+  <i class="fas {% if msg.tags == 'success' %}fa-check-circle{% elif msg.tags == 'error' %}fa-times-circle{% elif msg.tags == 'warning' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>{{ msg }}
+</div>
+{% endfor %}
+</div>
+<script>setTimeout(()=>{const el=document.getElementById('flash-messages');if(el){el.style.opacity='0';el.style.transition='opacity 0.5s';setTimeout(()=>el.remove(),500);}},5000);</script>
+{% endif %}
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

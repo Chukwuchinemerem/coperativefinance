@@ -1,0 +1,42 @@
+{% extends 'banking/admin_base.html' %}
+{% block admin_title %}Manage Transfers{% endblock %}
+{% block admin_content %}
+<div class="fade-in">
+  <h2 class="text-white font-bold text-xl mb-5">Transfer Requests</h2>
+  <div class="space-y-4">
+    {% for txn in txns %}
+    <div class="card-dark p-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="text-white font-bold text-lg">{{ txn.user.get_currency_symbol }}{{ txn.amount|floatformat:2 }} <span class="text-gray-400 text-sm">{{ txn.currency }}</span></div>
+          <div class="text-gray-400 text-sm">From: <span class="text-white">{{ txn.user.full_name|default:txn.user.username }}</span> ({{ txn.user.account_number }})</div>
+          <div class="text-gray-400 text-sm mt-1">To: <span class="text-white">{{ txn.recipient_name }}</span> @ {{ txn.recipient_bank }} | {{ txn.recipient_country }}</div>
+          <div class="text-gray-500 text-xs mt-1">IBAN: {{ txn.recipient_iban }} | Routing: {{ txn.recipient_routing }}</div>
+          <div class="text-gray-500 text-xs">Ref: {{ txn.reference }} | {{ txn.created_at|date:"M d, Y H:i" }}</div>
+          {% if txn.description %}<div class="text-gray-400 text-xs mt-1">Note: {{ txn.description }}</div>{% endif %}
+        </div>
+        <span class="status-badge badge-{{ txn.status }} text-sm">{{ txn.get_status_display }}</span>
+      </div>
+      {% if txn.status == 'pending' %}
+      <div class="mt-4 flex flex-col md:flex-row gap-3">
+        <form method="POST" action="/admin_dashboard/transfers/{{ txn.id }}/approve/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Optional note..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 transition whitespace-nowrap"><i class="fas fa-check mr-1"></i>Approve</button>
+        </form>
+        <form method="POST" action="/admin_dashboard/transfers/{{ txn.id }}/reject/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Rejection reason..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition whitespace-nowrap"><i class="fas fa-times mr-1"></i>Reject</button>
+        </form>
+      </div>
+      {% elif txn.admin_note %}
+      <div class="mt-2 text-gray-500 text-xs"><i class="fas fa-comment mr-1"></i>{{ txn.admin_note }}</div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="card-dark p-12 text-center text-gray-500"><i class="fas fa-exchange-alt text-5xl mb-4 text-gray-700"></i><p class="font-semibold">No transfers yet.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

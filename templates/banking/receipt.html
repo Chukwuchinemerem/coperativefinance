@@ -1,0 +1,204 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Receipt{% endblock %}
+{% block page_subtitle %}Transaction #{{ txn.reference }}{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  #sidebar, header, .no-print { display: none !important; }
+  body { background: white !important; }
+  .print-area { box-shadow: none !important; }
+}
+.receipt-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.receipt-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="fade-in max-w-lg mx-auto">
+  <div class="card-dark rounded-2xl overflow-hidden print-area" id="receiptCard">
+
+    <!-- Header -->
+    <div class="p-6 text-center relative overflow-hidden" style="background:linear-gradient(135deg,#1D4ED8 0%,#0B1E3A 100%);">
+      <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+      <div style="position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+
+      <!-- Bank logo -->
+      <div class="flex items-center justify-center gap-2 mb-4 relative z-10">
+        <div class="w-7 h-7 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+          <i class="fas fa-university text-white text-xs"></i>
+        </div>
+        <span class="text-white font-bold">Co-operative Finance<span class="text-blue-300">Bank</span></span>
+      </div>
+
+      <!-- Status icon -->
+      <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 relative z-10
+        {% if txn.status == 'approved' %}bg-green-500 bg-opacity-20 border-2 border-green-500 border-opacity-40
+        {% elif txn.status == 'rejected' %}bg-red-500 bg-opacity-20 border-2 border-red-500 border-opacity-40
+        {% else %}bg-yellow-500 bg-opacity-20 border-2 border-yellow-500 border-opacity-40{% endif %}">
+        <i class="fas text-2xl
+          {% if txn.status == 'approved' %}fa-check text-green-400
+          {% elif txn.status == 'rejected' %}fa-times text-red-400
+          {% else %}fa-clock text-yellow-400{% endif %}"></i>
+      </div>
+
+      <h2 class="text-white font-bold text-xl relative z-10">Transaction Receipt</h2>
+      <div class="mt-1 relative z-10">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
+          {% if txn.status == 'approved' %}bg-green-500 bg-opacity-20 text-green-300
+          {% elif txn.status == 'rejected' %}bg-red-500 bg-opacity-20 text-red-300
+          {% else %}bg-yellow-500 bg-opacity-20 text-yellow-300{% endif %}">
+          {{ txn.get_status_display|upper }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Amount section -->
+    <div class="px-6 py-5 text-center border-b border-gray-700" style="background:#172033;">
+      <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Transaction Amount</p>
+      <p class="text-white font-bold" style="font-size:2.5rem;">
+        {{ user.get_currency_symbol }}{{ txn.amount|floatformat:2 }}
+      </p>
+      <p class="text-gray-500 text-sm mt-1">{{ txn.currency }} · {{ txn.get_transaction_type_display }}</p>
+    </div>
+
+    <!-- Receipt details -->
+    <div class="px-6 py-5 space-y-0">
+
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Reference</span>
+        <span class="text-white font-mono text-xs font-bold">{{ txn.reference }}</span>
+      </div>
+
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Transaction Type</span>
+        <span class="text-white text-sm font-semibold">{{ txn.get_transaction_type_display }}</span>
+      </div>
+
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Date & Time</span>
+        <span class="text-white text-sm">{{ txn.created_at|date:"M d, Y" }} at {{ txn.created_at|date:"H:i" }}</span>
+      </div>
+
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Status</span>
+        <span class="status-badge badge-{{ txn.status }}">{{ txn.get_status_display }}</span>
+      </div>
+
+      {% if txn.recipient_name %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Recipient</span>
+        <span class="text-white text-sm font-semibold">{{ txn.recipient_name }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.recipient_bank %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Recipient Bank</span>
+        <span class="text-white text-sm">{{ txn.recipient_bank }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.recipient_iban %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">IBAN / Account</span>
+        <span class="text-white font-mono text-xs">{{ txn.recipient_iban }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.recipient_country %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Destination</span>
+        <span class="text-white text-sm">{{ txn.recipient_country }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.crypto_type %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Crypto</span>
+        <span class="text-orange-400 font-semibold text-sm">{{ txn.crypto_type }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.crypto_tx_hash %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">TX Hash</span>
+        <span class="text-green-400 font-mono text-xs break-all text-right max-w-48">{{ txn.crypto_tx_hash|truncatechars:24 }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.description %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Description</span>
+        <span class="text-white text-sm text-right max-w-48">{{ txn.description }}</span>
+      </div>
+      {% endif %}
+
+      {% if txn.admin_note %}
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Bank Note</span>
+        <span class="text-blue-300 text-sm text-right max-w-48">{{ txn.admin_note }}</span>
+      </div>
+      {% endif %}
+
+      <!-- Sender info -->
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Account Holder</span>
+        <span class="text-white text-sm font-semibold">{{ user.full_name|default:user.username }}</span>
+      </div>
+
+      <div class="receipt-row">
+        <span class="text-gray-400 text-sm">Account Number</span>
+        <span class="text-white font-mono text-sm">{{ user.account_number }}</span>
+      </div>
+
+    </div>
+
+    <!-- Barcode-style separator -->
+    <div class="px-6 py-3" style="background:#172033;">
+      <div class="flex items-center gap-2">
+        <div class="flex-1 h-px bg-gray-700"></div>
+        <i class="fas fa-shield-alt text-blue-500 text-xs"></i>
+        <span class="text-gray-600 text-xs">Co-operative Finance · Verified Transaction</span>
+        <i class="fas fa-shield-alt text-blue-500 text-xs"></i>
+        <div class="flex-1 h-px bg-gray-700"></div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="p-5 flex gap-3 no-print">
+      <button onclick="window.print()"
+        class="flex-1 bg-gray-700 text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-600 transition flex items-center justify-center gap-2">
+        <i class="fas fa-print"></i> Print
+      </button>
+      <button onclick="shareReceipt()"
+        class="flex-1 bg-gray-700 text-white py-3 rounded-xl text-sm font-semibold hover:bg-gray-600 transition flex items-center justify-center gap-2">
+        <i class="fas fa-share-nodes"></i> Share
+      </button>
+      <a href="/dashboard/transactions/"
+        class="flex-1 btn-primary text-center py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+function shareReceipt() {
+  const text = `Co-operative Finance Bank Receipt\nRef: {{ txn.reference }}\nAmount: {{ user.get_currency_symbol }}{{ txn.amount|floatformat:2 }}\nStatus: {{ txn.get_status_display }}\nDate: {{ txn.created_at|date:"M d, Y" }}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Transaction Receipt', text: text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.target.closest('button');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+  }
+}
+</script>
+{% endblock %}

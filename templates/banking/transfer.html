@@ -1,0 +1,40 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Transfer Funds{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in max-w-2xl mx-auto">
+  <div class="card-dark p-6">
+    <div class="mb-5">
+      <h2 class="text-white font-bold text-xl">International Transfer</h2>
+      <p class="text-gray-400 text-sm mt-1">Send money globally via IBAN / SWIFT. Available Balance: <span class="text-green-400 font-bold">{{ user.get_currency_symbol }}{{ user.balance|floatformat:2 }}</span></p>
+    </div>
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <div class="grid md:grid-cols-2 gap-4">
+        <div><label class="text-gray-400 text-sm block mb-1">Recipient Full Name *</label>
+        <input name="recipient_name" required placeholder="John Smith" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+        <div><label class="text-gray-400 text-sm block mb-1">Recipient Bank *</label>
+        <input name="recipient_bank" required placeholder="Chase Bank" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+        <div><label class="text-gray-400 text-sm block mb-1">Account Number / IBAN *</label>
+        <input name="recipient_iban" required placeholder="GB29NWBK..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+        <div><label class="text-gray-400 text-sm block mb-1">Routing / SWIFT / BIC</label>
+        <input name="recipient_routing" placeholder="NWBKGB2L" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+        <div><label class="text-gray-400 text-sm block mb-1">Recipient Country *</label>
+        <select name="recipient_country" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+          <option value="">-- Select Country --</option>
+          <option>United States</option><option>United Kingdom</option><option>Germany</option><option>France</option><option>Nigeria</option><option>Ghana</option><option>South Africa</option><option>Kenya</option><option>UAE</option><option>Saudi Arabia</option><option>India</option><option>China</option><option>Canada</option><option>Australia</option><option>Brazil</option><option>Mexico</option><option>Singapore</option><option>Japan</option><option>Other</option>
+        </select></div>
+        <div><label class="text-gray-400 text-sm block mb-1">Amount ({{ user.currency }}) *</label>
+        <input name="amount" type="number" step="0.01" min="1" required placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+        <div class="md:col-span-2"><label class="text-gray-400 text-sm block mb-1">Description / Narration</label>
+        <input name="description" placeholder="e.g. Family support, Invoice payment" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"></div>
+      </div>
+      <div class="bg-yellow-900 bg-opacity-30 border border-yellow-700 rounded-lg p-4 text-yellow-300 text-sm">
+        <i class="fas fa-info-circle mr-2"></i>Transfers are reviewed by our compliance team before processing. Approved transfers are deducted from your balance automatically.
+      </div>
+      <button type="submit" class="btn-primary w-full py-3 text-center rounded-xl text-sm font-bold">
+        <i class="fas fa-paper-plane mr-2"></i>Submit Transfer
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

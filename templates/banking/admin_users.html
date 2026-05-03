@@ -1,0 +1,148 @@
+{% extends 'banking/admin_base.html' %}
+{% block admin_title %}Manage Users{% endblock %}
+{% block admin_content %}
+<div class="fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+    <h2 class="text-white font-bold text-xl">All Users <span class="text-gray-500 text-base font-normal">({{ users.count }})</span></h2>
+    <a href="/admin_dashboard/users/create/" class="btn-primary text-sm py-2 px-5 text-center">
+      <i class="fas fa-user-plus mr-2"></i>Create New User
+    </a>
+  </div>
+
+  <!-- Search -->
+  <div class="flex gap-3 mb-5">
+    <div class="relative flex-1 max-w-md">
+      <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+      <input type="text" id="userSearch" onkeyup="filterUsers()" placeholder="Search by name, email, account number, User ID..."
+        value="{{ request.GET.search|default:'' }}"
+        class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500">
+    </div>
+  </div>
+
+  <div class="card-dark overflow-hidden">
+    <!-- Desktop Table -->
+    <div class="hidden md:block overflow-x-auto">
+      <table class="w-full text-sm" id="userTable">
+        <thead>
+          <tr class="border-b border-gray-700">
+            <th class="text-left px-5 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">User</th>
+            <th class="text-left px-4 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">Account</th>
+            <th class="text-left px-4 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">Balance</th>
+            <th class="text-left px-4 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">KYC</th>
+            <th class="text-left px-4 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">Currency</th>
+            <th class="text-center px-4 py-3 text-gray-500 text-xs uppercase tracking-widest font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+        <tr class="border-b border-gray-800 hover:bg-gray-800 transition user-row">
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-3">
+              {% if u.profile_image %}
+                <img src="{{ u.profile_image.url }}" class="w-9 h-9 rounded-full object-cover border-2 border-blue-800" alt="">
+              {% else %}
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 flex items-center justify-center text-white font-bold text-sm border-2 border-blue-800">
+                  {{ u.full_name|slice:":1"|upper|default:u.username|slice:":1"|upper }}
+                </div>
+              {% endif %}
+              <div>
+                <div class="text-white font-semibold leading-tight">{{ u.full_name|default:u.username }}</div>
+                <div class="text-gray-500 text-xs">{{ u.email }}</div>
+                <div class="text-gray-600 text-xs font-mono">ID: {{ u.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-4">
+            <div class="text-gray-300 font-mono text-xs">{{ u.account_number }}</div>
+            <div class="text-gray-600 text-xs">{{ u.get_account_type_display }}</div>
+          </td>
+          <td class="px-4 py-4">
+            <div class="text-green-400 font-bold">{{ u.get_currency_symbol }}{{ u.balance|floatformat:2 }}</div>
+          </td>
+          <td class="px-4 py-4">
+            <span class="status-badge badge-{{ u.kyc_status }}">{{ u.get_kyc_status_display }}</span>
+          </td>
+          <td class="px-4 py-4">
+            <span class="text-gray-300 text-sm font-semibold">{{ u.currency }}</span>
+          </td>
+          <td class="px-4 py-4">
+            <div class="flex items-center justify-center gap-2">
+              <a href="/admin_dashboard/users/{{ u.id }}/" title="Edit User"
+                class="flex items-center gap-1.5 bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-600 transition font-semibold">
+                <i class="fas fa-pen-to-square"></i> Edit
+              </a>
+              <form method="POST" action="/admin_dashboard/users/{{ u.id }}/delete/"
+                onsubmit="return confirm('Delete {{ u.username }}? This cannot be undone.')">
+                {% csrf_token %}
+                <button type="submit" title="Delete"
+                  class="flex items-center gap-1.5 bg-red-900 text-red-300 text-xs px-2.5 py-1.5 rounded-lg hover:bg-red-800 transition font-semibold">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center py-14 text-gray-500">
+          <i class="fas fa-users text-4xl mb-3 block text-gray-700"></i>
+          No users found.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="md:hidden divide-y divide-gray-800" id="mobileUserList">
+      {% for u in users %}
+      <div class="p-4 user-row">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            {% if u.profile_image %}
+              <img src="{{ u.profile_image.url }}" class="w-10 h-10 rounded-full object-cover border-2 border-blue-800 flex-shrink-0" alt="">
+            {% else %}
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-800 to-blue-950 flex items-center justify-center text-white font-bold text-sm border-2 border-blue-800 flex-shrink-0">
+                {{ u.full_name|slice:":1"|upper|default:u.username|slice:":1"|upper }}
+              </div>
+            {% endif %}
+            <div>
+              <div class="text-white font-semibold text-sm">{{ u.full_name|default:u.username }}</div>
+              <div class="text-gray-500 text-xs">{{ u.email }}</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-green-400 font-bold text-sm">{{ u.get_currency_symbol }}{{ u.balance|floatformat:2 }}</span>
+                <span class="status-badge badge-{{ u.kyc_status }}">{{ u.get_kyc_status_display }}</span>
+              </div>
+            </div>
+          </div>
+          <a href="/admin_dashboard/users/{{ u.id }}/"
+            class="flex-shrink-0 bg-blue-700 text-white text-xs px-3 py-2 rounded-lg hover:bg-blue-600 transition font-semibold">
+            <i class="fas fa-pen-to-square mr-1"></i>Edit
+          </a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-12 text-gray-500">No users found.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block admin_js %}
+<script>
+function filterUsers() {
+  const val = document.getElementById('userSearch').value.toLowerCase();
+  document.querySelectorAll('.user-row').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
+  });
+}
+// Auto-focus and filter if search param present
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const search = urlParams.get('search');
+  if (search) {
+    document.getElementById('userSearch').value = search;
+    filterUsers();
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'banking/admin_base.html' %}
+{% block admin_title %}KYC Review{% endblock %}
+{% block admin_content %}
+<div class="fade-in">
+  <h2 class="text-white font-bold text-xl mb-5">KYC Document Review</h2>
+  <div class="space-y-4">
+    {% for kyc in kycs %}
+    <div class="card-dark p-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-bold">{{ kyc.user.full_name|slice:":1"|upper }}</div>
+          <div>
+            <div class="text-white font-bold">{{ kyc.user.full_name|default:kyc.user.username }}</div>
+            <div class="text-gray-400 text-sm">{{ kyc.user.email }} | {{ kyc.user.country }}</div>
+            <div class="text-gray-500 text-xs">Submitted: {{ kyc.submitted_at|date:"M d, Y H:i" }}</div>
+          </div>
+        </div>
+        <span class="status-badge badge-{{ kyc.user.kyc_status }}">{{ kyc.user.get_kyc_status_display }}</span>
+      </div>
+      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {% if kyc.id_document %}<a href="{{ kyc.id_document.url }}" target="_blank" class="bg-gray-800 rounded-lg p-3 text-center hover:bg-gray-700 transition"><i class="fas fa-id-card text-blue-400 text-2xl mb-1 block"></i><span class="text-gray-300 text-xs">ID Document</span></a>{% endif %}
+        {% if kyc.address_proof %}<a href="{{ kyc.address_proof.url }}" target="_blank" class="bg-gray-800 rounded-lg p-3 text-center hover:bg-gray-700 transition"><i class="fas fa-home text-green-400 text-2xl mb-1 block"></i><span class="text-gray-300 text-xs">Address Proof</span></a>{% endif %}
+        {% if kyc.selfie %}<a href="{{ kyc.selfie.url }}" target="_blank" class="bg-gray-800 rounded-lg p-3 text-center hover:bg-gray-700 transition"><i class="fas fa-camera text-purple-400 text-2xl mb-1 block"></i><span class="text-gray-300 text-xs">Selfie</span></a>{% endif %}
+        {% if kyc.ssn %}<div class="bg-gray-800 rounded-lg p-3 text-center"><i class="fas fa-hashtag text-yellow-400 text-2xl mb-1 block"></i><span class="text-gray-300 text-xs">SSN: {{ kyc.ssn }}</span></div>{% endif %}
+      </div>
+      {% if kyc.user.kyc_status == 'pending' %}
+      <div class="mt-4 flex flex-col md:flex-row gap-3">
+        <form method="POST" action="/admin_dashboard/kyc/{{ kyc.id }}/approve/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Optional note..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-600 transition whitespace-nowrap"><i class="fas fa-check mr-1"></i>Approve</button>
+        </form>
+        <form method="POST" action="/admin_dashboard/kyc/{{ kyc.id }}/reject/" class="flex gap-2 flex-1">
+          {% csrf_token %}
+          <input name="note" placeholder="Rejection reason..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition whitespace-nowrap"><i class="fas fa-times mr-1"></i>Reject</button>
+        </form>
+      </div>
+      {% elif kyc.admin_note %}
+      <div class="mt-3 text-gray-500 text-sm"><i class="fas fa-comment mr-1"></i>Note: {{ kyc.admin_note }}</div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="card-dark p-12 text-center text-gray-500">
+      <i class="fas fa-id-badge text-5xl mb-4 text-gray-700"></i>
+      <p class="font-semibold">No KYC submissions yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

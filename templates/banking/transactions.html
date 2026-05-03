@@ -1,0 +1,46 @@
+{% extends 'banking/dashboard_base.html' %}
+{% block page_title %}Transaction History{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in">
+  <div class="card-dark p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-white font-bold text-xl">All Transactions</h2>
+      <span class="text-gray-400 text-sm">{{ txns.count }} records</span>
+    </div>
+    {% if txns %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-gray-500 border-b border-gray-700 text-xs uppercase">
+          <th class="text-left pb-3 font-semibold">Reference</th>
+          <th class="text-left pb-3 font-semibold">Type</th>
+          <th class="text-left pb-3 font-semibold">Amount</th>
+          <th class="text-left pb-3 font-semibold hidden md:table-cell">Date</th>
+          <th class="text-left pb-3 font-semibold">Status</th>
+          <th class="text-left pb-3 font-semibold">Receipt</th>
+        </tr></thead>
+        <tbody>
+        {% for txn in txns %}
+        <tr class="border-b border-gray-800 hover:bg-gray-800 transition">
+          <td class="py-3 text-gray-300 font-mono text-xs">{{ txn.reference }}</td>
+          <td class="py-3 text-gray-300">{{ txn.get_transaction_type_display }}</td>
+          <td class="py-3 font-bold {% if txn.transaction_type in 'admin_credit,loan_disbursement' %}text-green-400{% elif txn.transaction_type == 'crypto_deposit' %}text-orange-400{% else %}text-red-400{% endif %}">
+            {{ user.get_currency_symbol }}{{ txn.amount|floatformat:2 }}
+          </td>
+          <td class="py-3 text-gray-500 hidden md:table-cell">{{ txn.created_at|date:"M d, Y" }}</td>
+          <td class="py-3"><span class="status-badge badge-{{ txn.status }}">{{ txn.get_status_display }}</span></td>
+          <td class="py-3"><a href="/dashboard/receipt/{{ txn.id }}/" class="text-blue-400 hover:text-blue-300 text-xs"><i class="fas fa-file-alt"></i></a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-gray-500">
+      <i class="fas fa-receipt text-5xl mb-4 text-gray-700"></i>
+      <p class="font-semibold">No transactions found</p>
+      <a href="/dashboard/transfer/" class="text-blue-400 text-sm mt-2 inline-block">Make your first transfer</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
