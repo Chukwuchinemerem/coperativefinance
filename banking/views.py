@@ -33,6 +33,10 @@ def homepage(request):
     return render(request, 'banking/homepage.html')
 
 
+def privacy_policy(request):
+    return render(request, 'legal/privacy-policy.html')
+
+
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

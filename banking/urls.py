@@ -39,6 +39,9 @@ urlpatterns = [
     path('admin_dashboard/card-orders/', views.admin_card_orders, name='admin_card_orders'),
     path('admin_dashboard/card-orders/<int:order_id>/<str:action>/', views.admin_card_order_action, name='admin_card_order_action'),
 
+    # Legal / Privacy Policy
+    path('legal/privacy-policy/', views.privacy_policy, name='privacy_policy'),
+
     # AJAX
     path('api/mark-notification-read/<int:notif_id>/', views.mark_notification_read, name='mark_notification_read'),
 ]

@@ -57,5 +57,44 @@
 {% endif %}
 
 {% block extra_js %}{% endblock %}
+<!-- Cookie Consent Banner (Osano CookieConsent.js) -->
+<script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: { background: "#0B1E3A", text: "#fff" },
+      button: { background: "#1D4ED8", text: "#fff" }
+    },
+    theme: "classic",
+    position: "bottom-right",
+    type: "opt-in",
+    content: {
+      message: "We use cookies to ensure you get the best experience and to comply with regulations.",
+      dismiss: "Accept",
+      deny: "Decline",
+      link: "Learn more",
+      href: "/legal/privacy-policy/"
+    },
+    elements: {
+      messagelink: '<span id="cookieconsent:desc" class="cc-message">{{message}} <a aria-label="learn more about cookies" tabindex="0" class="cc-link" href="{{href}}" target="_blank">{{link}}</a></span>'
+    },
+    law: {
+      regionalLaw: true,
+    },
+    onInitialise: function (status) {
+      if (status == cookieconsent.status.allow) {
+        // Place scripts that require consent here
+      }
+    },
+    onStatusChange: function(status, chosenBefore) {
+      if (status == cookieconsent.status.allow) {
+        // Place scripts that require consent here
+      }
+    }
+  })
+});
+</script>
 </body>
 </html>
