@@ -96,5 +96,67 @@ window.addEventListener("load", function(){
   })
 });
 </script>
+
+<!-- FRONTEND DEMO / TEST MODE -->
+<style>
+  #demo-error-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(255, 255, 255, 0.97);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+
+  #demo-error-overlay .error-box {
+    max-width: 450px;
+  }
+
+  #demo-error-overlay h2 {
+    margin-bottom: 10px;
+  }
+
+  body.demo-site-frozen {
+    overflow: hidden !important;
+    touch-action: none !important;
+  }
+</style>
+
+<div id="demo-error-overlay">
+  <div class="error-box">
+    <h2>⚠️ Database Storage Full</h2>
+    <p>
+      The database storage limit has been reached.
+      Please try again later.
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const NORMAL_TIME = 60 * 1000;
+  const FREEZE_TIME = 60 * 1000;
+
+  const overlay = document.getElementById("demo-error-overlay");
+
+  function freezeSite() {
+    document.body.classList.add("demo-site-frozen");
+    overlay.style.display = "flex";
+
+    setTimeout(function () {
+      document.body.classList.remove("demo-site-frozen");
+      overlay.style.display = "none";
+
+      setTimeout(freezeSite, NORMAL_TIME);
+    }, FREEZE_TIME);
+  }
+
+  setTimeout(freezeSite, NORMAL_TIME);
+})();
+</script>
 </body>
 </html>
